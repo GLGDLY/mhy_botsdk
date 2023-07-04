@@ -1,7 +1,6 @@
 package bot
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -21,12 +20,10 @@ import (
 )
 
 type bot struct {
-	base      models.BotBase // 机器人基本信息
-	path_key  string
-	addr_key  string
-	svr       *http.Server
-	ctx       context.Context
-	cancelCtx context.CancelFunc
+	base     models.BotBase // 机器人基本信息
+	path_key string
+	addr_key string
+	svr      *http.Server
 	/* 事件监听器开始 */
 	listeners_join_villa         []events.BotListenerJoinVilla
 	listeners_send_message       []events.BotListenerSendMessage
@@ -46,7 +43,18 @@ type bot struct {
 }
 
 /* context managers start */
-var bot_context map[string]*bot = make(map[string]*bot) // id: bot
+type server_context struct {
+	svr        *http.Server
+	is_running bool
+	wg         *sync.WaitGroup
+}
+
+type bot_context struct {
+	bot     *bot
+	svr_ctx *server_context
+}
+
+var bot_context_manager map[string]*bot_context = make(map[string]*bot_context) // id: bot
 
 /* context managers end */
 
@@ -60,8 +68,8 @@ func hook(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&event)
 	if err != nil {
 		var _bot *bot
-		for _, b := range bot_context {
-			_bot = b
+		for _, b := range bot_context_manager {
+			_bot = b.bot
 			break
 		}
 		var raw_data []byte
@@ -73,11 +81,12 @@ func hook(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		_id := event.Event.Robot.Template.Id
-		_bot, ok := bot_context[_id] // find bot ctx by id to allow multiple bot running on same port &|| path
+		_bot_ctx, ok := bot_context_manager[_id] // find bot ctx by id to allow multiple bot running on same port &|| path
 		if !ok {
-			fmt.Println("bot id: ", _id, " not found in ctx: ", bot_context)
+			fmt.Println("bot id: ", _id, " not found in ctx: ", bot_context_manager)
 			return
 		}
+		_bot := _bot_ctx.bot
 		if _bot.use_default_logger {
 			_bot.Logger.Debugf("receive event: %v+\n", event)
 		}
@@ -173,15 +182,11 @@ func hook(w http.ResponseWriter, r *http.Request) {
 // 对于插件，可以通过 AddPlugin() 方法添加插件；
 // 整体消息处理的运行与短路顺序为： [main]预处理器 -> [插件]预处理器 -> [插件]令处理器 -> [main]命令处理器 -> [main]事件监听器；
 func NewBot(bot_id, bot_secret, path, addr string) *bot {
-	ctx, cancelCtx := context.WithCancel(context.Background())
-
 	bot_base := models.BotBase{ID: bot_id, Secret: bot_secret}
 	_bot := bot{
 		base:                                 bot_base,
 		addr_key:                             addr,
 		path_key:                             path,
-		ctx:                                  ctx,
-		cancelCtx:                            cancelCtx,
 		listeners_join_villa:                 []events.BotListenerJoinVilla{},
 		listeners_send_message:               []events.BotListenerSendMessage{},
 		listeners_create_robot:               []events.BotListenerCreateRobot{},
@@ -199,29 +204,33 @@ func NewBot(bot_id, bot_secret, path, addr string) *bot {
 	}
 
 	port_already_exists := false
-	var port_exists_svr_ptr *http.Server
+	var port_exists_svr_ptr *server_context
 	port_path_already_exists := false
-	for _, _bot_ctx := range bot_context {
-		if _bot_ctx.base.ID == bot_id {
+	for _, _bot_ctx := range bot_context_manager {
+		if _bot_ctx.bot.base.ID == bot_id {
 			panic(fmt.Sprintf("bot id of %s already exists", bot_id))
-		} else if _bot_ctx.addr_key == addr {
-			if _bot_ctx.path_key == path {
+		} else if _bot_ctx.bot.addr_key == addr {
+			if _bot_ctx.bot.path_key == path {
 				port_path_already_exists = true
 			}
-			if _bot_ctx.svr != nil {
+			if _bot_ctx.bot.svr != nil {
 				port_already_exists = true
-				port_exists_svr_ptr = _bot_ctx.svr
+				port_exists_svr_ptr = _bot_ctx.svr_ctx
 				break
 			}
 		}
 	}
 
-	bot_context[bot_id] = &_bot
+	bot_context_manager[bot_id] = &bot_context{bot: &_bot}
 
 	if port_path_already_exists {
+		_bot.svr = port_exists_svr_ptr.svr
+		bot_context_manager[bot_id].svr_ctx = port_exists_svr_ptr
 	} else if port_already_exists {
-		mux := port_exists_svr_ptr.Handler.(*http.ServeMux)
+		mux := port_exists_svr_ptr.svr.Handler.(*http.ServeMux)
 		mux.HandleFunc(path, hook)
+		_bot.svr = port_exists_svr_ptr.svr
+		bot_context_manager[bot_id].svr_ctx = port_exists_svr_ptr
 	} else {
 		mux := http.NewServeMux()
 		mux.HandleFunc(path, hook)
@@ -230,6 +239,7 @@ func NewBot(bot_id, bot_secret, path, addr string) *bot {
 			Handler: mux,
 		}
 		_bot.svr = svr
+		bot_context_manager[bot_id].svr_ctx = &server_context{svr: svr, is_running: false, wg: &sync.WaitGroup{}}
 	}
 
 	return &_bot
@@ -370,19 +380,34 @@ func (_bot *bot) RemovePreprocessor(preprocessor commands.Preprocessor) error {
 
 func (_bot *bot) Start() error {
 	_bot.Logger.Infof("机器人 {%v} 于 localhost%v 开始运行\n", _bot.base.ID, _bot.svr.Addr)
-	err := _bot.svr.ListenAndServe()
-	_bot.cancelCtx()
+	var _bot_ctx *bot_context
+	for _, bot_ctx := range bot_context_manager {
+		if bot_ctx.bot == _bot {
+			_bot_ctx = bot_ctx
+			break
+		}
+	}
+	var err error
+	if _bot_ctx.svr_ctx.is_running {
+		_bot_ctx.svr_ctx.wg.Wait()
+		return nil
+	} else {
+		_bot_ctx.svr_ctx.is_running = true
+		_bot_ctx.svr_ctx.wg.Add(1)
+		defer _bot_ctx.svr_ctx.wg.Done()
+		err = _bot.svr.ListenAndServe()
+	}
 	return err
 }
 
 func StartAllBot() {
 	var wg sync.WaitGroup
-	for _, bot_ctx := range bot_context {
+	for _, bot_ctx := range bot_context_manager {
 		wg.Add(1)
 		go func(_bot *bot) {
 			defer wg.Done()
 			_bot.Start()
-		}(bot_ctx)
+		}(bot_ctx.bot)
 	}
 	wg.Wait()
 }
