@@ -1,8 +1,9 @@
 package apis
 
 import (
-	models "mhy_botsdk/api_models"
 	"net/http"
+
+	models "github.com/GLGDLY/mhy_botsdk/api_models"
 )
 
 func (api *ApiBase) OperateMemberToRole(villa_id uint64, role_id, uid uint64, is_add bool) (models.EmptyModel, int, error) {

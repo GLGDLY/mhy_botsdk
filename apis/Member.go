@@ -1,8 +1,9 @@
 package apis
 
 import (
-	models "mhy_botsdk/api_models"
 	"net/http"
+
+	models "github.com/GLGDLY/mhy_botsdk/api_models"
 )
 
 func (api *ApiBase) GetMember(villa_id uint64, uid uint64) (models.GetMemberModel, int, error) {

@@ -3,8 +3,9 @@ package apis
 import (
 	"bytes"
 	"encoding/json"
-	models "mhy_botsdk/api_models"
 	"net/http"
+
+	models "github.com/GLGDLY/mhy_botsdk/api_models"
 )
 
 func (api *ApiBase) Audit(villa_id uint64, audit_input models.UserInputAudit) (models.AuditModel, int, error) {

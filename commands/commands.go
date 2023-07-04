@@ -1,13 +1,14 @@
 package commands
 
 import (
-	api_models "mhy_botsdk/api_models"
-	apis "mhy_botsdk/apis"
-	events "mhy_botsdk/events"
-	logger "mhy_botsdk/logger"
-	utils "mhy_botsdk/utils"
 	"regexp"
 	"strings"
+
+	api_models "github.com/GLGDLY/mhy_botsdk/api_models"
+	apis "github.com/GLGDLY/mhy_botsdk/apis"
+	events "github.com/GLGDLY/mhy_botsdk/events"
+	logger "github.com/GLGDLY/mhy_botsdk/logger"
+	utils "github.com/GLGDLY/mhy_botsdk/utils"
 )
 
 type Preprocessor events.BotListenerSendMessage

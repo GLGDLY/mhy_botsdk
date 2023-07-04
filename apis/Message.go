@@ -3,8 +3,9 @@ package apis
 import (
 	"encoding/json"
 	"fmt"
-	models "mhy_botsdk/api_models"
 	"net/http"
+
+	models "github.com/GLGDLY/mhy_botsdk/api_models"
 )
 
 func (api *ApiBase) PinMessage(villa_id uint64, msg_uid string, is_cancel bool, room_id uint64, send_at int64) (models.EmptyModel, int, error) {

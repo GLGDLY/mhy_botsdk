@@ -6,12 +6,13 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	base "mhy_botsdk"
-	models "mhy_botsdk/models"
-	utils "mhy_botsdk/utils"
 	"net/http"
 	"net/url"
 	"reflect"
+
+	base "github.com/GLGDLY/mhy_botsdk"
+	models "github.com/GLGDLY/mhy_botsdk/models"
+	utils "github.com/GLGDLY/mhy_botsdk/utils"
 )
 
 const open_api_url string = "https://bbs-api.miyoushe.com"
@@ -69,6 +70,6 @@ func (api *ApiBase) Request(villa_id uint64, request *http.Request) (*http.Respo
 	request.Header.Set("x-rpc-bot_id", api.Base.ID)
 	request.Header.Set("x-rpc-bot_secret", api.Base.Secret)
 	request.Header.Set("x-rpc-bot_villa_id", utils.String(villa_id))
-	request.Header.Set("User-Agent", "mhy_botsdk"+base.VERSION)
+	request.Header.Set("User-Agent", "github.com/GLGDLY/mhy_botsdk"+base.VERSION)
 	return api.session.Do(request)
 }

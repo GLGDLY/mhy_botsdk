@@ -3,7 +3,8 @@ package api_models
 import (
 	"bytes"
 	"errors"
-	utils "mhy_botsdk/utils"
+
+	utils "github.com/GLGDLY/mhy_botsdk/utils"
 )
 
 /* user input message struct wrapper */

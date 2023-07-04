@@ -1,8 +1,9 @@
 package apis
 
 import (
-	models "mhy_botsdk/api_models"
 	"net/http"
+
+	models "github.com/GLGDLY/mhy_botsdk/api_models"
 )
 
 func (api *ApiBase) CreateGroup(villa_id uint64, group_name string) (models.CreateRoomModel, int, error) {

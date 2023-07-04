@@ -2,8 +2,9 @@ package events
 
 import (
 	"encoding/json"
-	api_models "mhy_botsdk/api_models"
-	apis "mhy_botsdk/apis"
+
+	api_models "github.com/GLGDLY/mhy_botsdk/api_models"
+	apis "github.com/GLGDLY/mhy_botsdk/apis"
 )
 
 /* --------- enum EventType start --------- */

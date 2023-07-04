@@ -5,16 +5,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	apis "mhy_botsdk/apis"
-	commands "mhy_botsdk/commands"
-	events "mhy_botsdk/events"
-	logger "mhy_botsdk/logger"
-	models "mhy_botsdk/models"
-	plugin "mhy_botsdk/plugins"
-	utils "mhy_botsdk/utils"
 	"net/http"
 	"reflect"
 	"sync"
+
+	apis "github.com/GLGDLY/mhy_botsdk/apis"
+	commands "github.com/GLGDLY/mhy_botsdk/commands"
+	events "github.com/GLGDLY/mhy_botsdk/events"
+	logger "github.com/GLGDLY/mhy_botsdk/logger"
+	models "github.com/GLGDLY/mhy_botsdk/models"
+	plugin "github.com/GLGDLY/mhy_botsdk/plugins"
+	utils "github.com/GLGDLY/mhy_botsdk/utils"
 
 	_ "github.com/fatih/color" // used init for support color output in console
 )

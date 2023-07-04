@@ -1,8 +1,9 @@
 package apis
 
 import (
-	models "mhy_botsdk/api_models"
 	"net/http"
+
+	models "github.com/GLGDLY/mhy_botsdk/api_models"
 )
 
 func (api *ApiBase) GetAllEmoticons(villa_id uint64) (models.GetAllEmoticonsModel, int, error) {
