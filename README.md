@@ -1,8 +1,8 @@
 # mhy_botsdk
 
-一款米哈游大别野机器人的Go SDK
-
 <div align="center">
+
+**一款米哈游大别野机器人的Go SDK**
 
 [![Language](https://img.shields.io/badge/language-go-green.svg?style=plastic)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-orange.svg?style=plastic)](https://github.com/GLGDLY/mhy_botsdk/blob/master/LICENSE)
