@@ -2,6 +2,14 @@
 
 一款米哈游大别野机器人的Go SDK
 
+<div align="center">
+
+[![Language](https://img.shields.io/badge/language-go-green.svg?style=plastic)](https://go.dev/)
+[![License](https://img.shields.io/badge/license-MIT-orange.svg?style=plastic)](https://github.com/GLGDLY/mhy_botsdk/blob/master/LICENSE)
+[![Go](https://img.shields.io/github/v/tag/GLGDLY/mhy_botsdk.svg?style=plastic)](https://pkg.go.dev/github.com/GLGDLY/mhy_botsdk)
+
+</div>
+
 - 完善所有事件和API
 - 特别针对消息类型事件，配有OnCommand、Preprocessor、Reply等拓展处理器
 - 具备Plugins模块，允许使用外部模块直接编写应用
@@ -18,10 +26,10 @@ import (
     bot_events "github.com/GLGDLY/mhy_botsdk/events"
 )
 
-// NewBot参数: id, secret, 机器人名字, 路径, 端口
+// NewBot参数: id, secret, 路径, 端口
 // 下方例子会监听 localhost:8888/ 获取消息
-// 并验证事件的机器人名字是否符合
-var bot = bot_base.NewBot("bot_id", "bot_secret", "bot_name", "/", ":8888")
+// 并验证事件的机器人ID是否符合
+var bot = bot_base.NewBot("bot_id", "bot_secret", "/", ":8888")
 
 func msg_preprocessor(data bot_events.EventSendMessage) { // 借助preprocessor为所有消息记录log
     bot.Logger.Info("收到来自 " + data.Data.Nickname + " 的消息：" + data.GetContent(true))
@@ -191,7 +199,7 @@ import (
 )
 
 // 创建NewBot时会自动加载import了的插件
-var bot = bot_base.NewBot("bot_id", "bot_secret", "bot_name", "/", ":8888")
+var bot = bot_base.NewBot("bot_id", "bot_secret", "/", ":8888")
 
 func main() {
     bot.SetPluginsShortCircuitAffectMain(true) // 设置插件的短路是否影响main中注册的指令和消息处理器
