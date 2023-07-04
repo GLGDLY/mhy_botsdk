@@ -1,4 +1,4 @@
-module mhy_botsdk
+module github.com/GLGDLY/mhy_botsdk
 
 go 1.18
 
