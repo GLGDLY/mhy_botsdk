@@ -24,6 +24,7 @@ func logger_dispatcher(data bot_events.EventSendMessage) bot_logger.LoggerInterf
 	case bot_id2:
 		return bot.Logger
 	}
+	return bot_logger.NewDefaultLogger("default")
 }
 
 func msg_preprocessor(data bot_events.EventSendMessage) {
