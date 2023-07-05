@@ -196,7 +196,6 @@ func NewBot(bot_id, bot_secret, path, addr string) *bot {
 		use_default_logger:                   false,
 		is_plugins_short_circuit_affect_main: false,
 		is_filter_self_msg:                   true,
-		plugins:                              plugin.FetchPlugins(), // load plugins from plugins context manager
 		on_commands:                          []commands.OnCommand{},
 		preprocessors:                        []commands.Preprocessor{},
 		Api:                                  &apis.ApiBase{Base: bot_base},
@@ -262,7 +261,21 @@ func (_bot *bot) SetPluginsShortCircuitAffectMain(is_affect bool) {
 
 // 设置是否启用某一插件
 func (_bot *bot) SetPluginEnabled(plugin_name string, is_enable bool) {
+	if _bot.plugins == nil {
+		_bot.plugins = plugin.FetchPlugins() // load plugins from plugins context manager
+	}
 	_bot.plugins[plugin_name].IsEnable = is_enable
+}
+
+func (_bot *bot) GetPluginNames() []string {
+	if _bot.plugins == nil {
+		_bot.plugins = plugin.FetchPlugins() // load plugins from plugins context manager
+	}
+	plugin_names := []string{}
+	for plugin_name := range _bot.plugins {
+		plugin_names = append(plugin_names, plugin_name)
+	}
+	return plugin_names
 }
 
 // 设置是否过滤自己发送的消息，默认为true
@@ -379,6 +392,20 @@ func (_bot *bot) RemovePreprocessor(preprocessor commands.Preprocessor) error {
 }
 
 func (_bot *bot) Start() error {
+	if _bot.plugins == nil {
+		_bot.plugins = plugin.FetchPlugins() // load plugins from plugins context manager
+	}
+
+	for _plugin_name, _plugin := range _bot.plugins {
+		var _enable string
+		if _plugin.IsEnable {
+			_enable = "启用"
+		} else {
+			_enable = "禁用"
+		}
+		_bot.Logger.Infof("机器人 {%v} 加载了插件 %s (%s)\n", _bot.base.ID, _plugin_name, _enable)
+	}
+
 	_bot.Logger.Infof("机器人 {%v} 于 localhost%v 开始运行\n", _bot.base.ID, _bot.svr.Addr)
 	var _bot_ctx *bot_context
 	for _, bot_ctx := range bot_context_manager {

@@ -126,7 +126,12 @@ func RegisterPlugin(name string, context *Plugin) {
 }
 
 func FetchPlugins() map[string]*Plugin {
-	return context_manager
+	context_manager_copy := make(map[string]*Plugin)
+	for k, v := range context_manager {
+		_v := *v
+		context_manager_copy[k] = &_v
+	}
+	return context_manager_copy
 }
 
 func ClearPlugins() {
