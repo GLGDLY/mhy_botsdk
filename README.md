@@ -10,7 +10,7 @@
 
 </div>
 
-- 基本完善所有事件和API，并支持同时运行多个实例
+- 基本完善所有事件和API，并支持同时运行多个实例（支持同端口、同路径运行多个拥有不同监听器的机器人）
 - 特别针对消息类型事件，配有OnCommand、Preprocessor、Reply等拓展处理器
 - 具备Plugins模块，允许使用外部模块直接编写应用
 
@@ -22,6 +22,8 @@
 package main
 
 import (
+    "strings"
+
     bot_api_models "github.com/GLGDLY/mhy_botsdk/api_models"
     bot_base "github.com/GLGDLY/mhy_botsdk/bot"
     bot_commands "github.com/GLGDLY/mhy_botsdk/commands"
@@ -98,7 +100,7 @@ func main() {
         RequireAdmin:   false,
         IsShortCircuit: true,
     })
-    bot.AddListener(bot_events.SendMessage, msg_handler)
+    bot.AddListenerSendMessage(msg_handler)
     /* NewBot 创建一个机器人实例，bot_id 为机器人的id，bot_secret 为机器人的secret，path 为接收事件的路径（如"/"），addr 为接收事件的地址（如":8888"）；
      * 机器人实例创建后，需要调用 Run() 方法启动机器人；
      * 对于消息处理，可以通过 AddPreprocessor() 方法添加预处理器，通过 AddOnCommand() 方法添加命令处理器，通过 AddListener() 方法添加事件监听器；
