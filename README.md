@@ -154,14 +154,14 @@ func command1(data bot_events.EventSendMessage, api *bot_apis.ApiBase, logger bo
     logger.Info("plugin1::command1")
     reply, _ := bot_api_models.NewMsg(bot_api_models.MsgTypeText)
     reply.SetText("plugin1::command1")
-    bot.Logger.Info(data.Reply(reply))
+    logger.Info(data.Reply(reply))
 }
 
 func command2(data bot_events.EventSendMessage, api *bot_apis.ApiBase, logger bot_logger.LoggerInterface) {
     logger.Info("plugin1::command2")
     reply, _ := bot_api_models.NewMsg(bot_api_models.MsgTypeText)
     reply.SetText("plugin1::command2")
-    bot.Logger.Info(data.Reply(reply))
+    logger.Info(data.Reply(reply))
 }
 
 func init() {
@@ -195,10 +195,7 @@ func init() {
 package main
 
 import (
-    bot_api_models "github.com/GLGDLY/mhy_botsdk/api_models"
     bot_base "github.com/GLGDLY/mhy_botsdk/bot"
-    bot_commands "github.com/GLGDLY/mhy_botsdk/commands"
-    bot_events "github.com/GLGDLY/mhy_botsdk/events"
     _ "path_to_plugin1" // 使用import导入plugin1
 )
 
