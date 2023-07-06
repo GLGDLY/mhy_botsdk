@@ -19,10 +19,10 @@
 
 > 请参阅[examples](./examples)
 
-- [exmaple1](./examples/exmaple1_basic/exmaple1_basic.go)：简单的机器人，包含了消息处理器、指令处理器、事件监听器
-- [exmaple2](./examples/example2_multi_bot/example2_multi_bot.go)：多机器人同时允许
-- [exmaple3](./examples/exmaple3_plugins)：简单的插件结构
-- [exmaple4](./examples/exmaple4_wait_for/exmaple4_wait_for.go)：机器人暂停当前消息处理链，等待用户输入（以简单的猜数字机器人为例子）
+- [example1](./examples/example1_basic/example1_basic.go)：简单的机器人，包含了消息处理器、指令处理器、事件监听器
+- [example2](./examples/example2_multi_bot/example2_multi_bot.go)：多机器人同时允许
+- [example3](./examples/example3_plugins)：简单的插件结构
+- [example4](./examples/example4_wait_for/example4_wait_for.go)：机器人暂停当前消息处理链，等待用户输入（以简单的猜数字机器人为例子）
 
 *由于官方文档与实际存在不少差异，目前并不能确保所有消息事件和API完全正确*
 
