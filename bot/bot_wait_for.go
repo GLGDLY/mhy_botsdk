@@ -103,7 +103,7 @@ func (_bot *bot) WaitForCommand(reg models.WaitForCommandRegister) (*events.Even
 	defer close(_reg.channel)
 
 	// valid scope with data type and write in cooresponding scope validation data
-	if reflect.TypeOf(reg.Data).Kind() == reflect.Ptr {
+	if reg.Data != nil && reflect.TypeOf(reg.Data).Kind() == reflect.Ptr {
 		reg.Data = reflect.ValueOf(reg.Data).Elem().Interface()
 	}
 	switch reg.Data.(type) {

@@ -63,8 +63,8 @@ func (p *OnCommand) processCommand(data events.EventSendMessage, _logger logger.
 			return false
 		}
 	}
-	utils.Try(func() { p.Listener(data, _api, _logger) }, func(err interface{}) {
-		_logger.Error("plugins listener {", utils.GetFunctionName(p.Listener), "} error: ", err)
+	utils.Try(func() { p.Listener(data, _api, _logger) }, func(err interface{}, tb string) {
+		_logger.Error("command listener {", utils.GetFunctionName(p.Listener), "} error: ", err, "\n", tb)
 	})
 	return p.IsShortCircuit
 }

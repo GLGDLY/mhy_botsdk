@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"reflect"
 	"runtime"
+	"runtime/debug"
 )
 
-func Try(function func(), handler func(interface{})) {
+func Try(function func(), handler func(interface{}, string)) {
 	defer func() {
 		err := recover()
 		if err != nil {
-			handler(err)
+			handler(err, "Traceback: \n"+string(debug.Stack()))
 		}
 	}()
 	function()

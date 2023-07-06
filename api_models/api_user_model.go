@@ -2,6 +2,7 @@ package api_models
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 
 	utils "github.com/GLGDLY/mhy_botsdk/utils"
@@ -170,14 +171,27 @@ func (msg MsgInputModel) SetPost(post_id string) error {
 	return nil
 }
 
-func (msg MsgInputModel) Finialize() {
-	if MsgContentType(msg["object_name"].(MsgContentType)) == MsgTypeText {
-		_, ok := msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["text"].(string)
+// return a copy of msg
+func (msg MsgInputModel) Finialize(room_id uint64) MsgInputModel {
+	// copy
+	_msg := make(MsgInputModel)
+	for k, v := range msg {
+		_msg[k] = v
+	}
+
+	if MsgContentType(_msg["object_name"].(MsgContentType)) == MsgTypeText {
+		_, ok := _msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["text"].(string)
 		if !ok {
-			msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["text"] =
-				msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["text"].(*bytes.Buffer).String()
+			_msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["text"] =
+				_msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["text"].(*bytes.Buffer).String()
 		}
 	}
+
+	_msg["room_id"] = room_id
+
+	bytesData, _ := json.Marshal(_msg["msg_content"].(MsgInputModel))
+	_msg["msg_content"] = string(bytesData)
+	return _msg
 }
 
 /* user input audit struct wrapper */

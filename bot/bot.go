@@ -88,8 +88,8 @@ switch_label:
 	case events.JoinVilla:
 		event := events.Event2EventJoinVilla(event)
 		for _, listener := range _bot.listeners_join_villa {
-			utils.Try(func() { listener(event) }, func(err interface{}) {
-				_bot.Logger.Error("listener {", utils.GetFunctionName(listener), "} error: ", err)
+			utils.Try(func() { listener(event) }, func(err interface{}, tb string) {
+				_bot.Logger.Error("listener {", utils.GetFunctionName(listener), "} error: ", err, "\n", tb)
 			})
 		}
 	case events.SendMessage:
@@ -99,8 +99,8 @@ switch_label:
 		}
 		// 1. run preprocessors
 		for _, _preprocessor := range _bot.preprocessors {
-			utils.Try(func() { _preprocessor(event) }, func(err interface{}) {
-				_bot.Logger.Error("preprocessor {", utils.GetFunctionName(_preprocessor), "} error: ", err)
+			utils.Try(func() { _preprocessor(event) }, func(err interface{}, tb string) {
+				_bot.Logger.Error("preprocessor {", utils.GetFunctionName(_preprocessor), "} error: ", err, "\n", tb)
 			})
 		}
 		// 2. run wait_for command registers
@@ -111,8 +111,8 @@ switch_label:
 		for _, p := range _bot.plugins {
 			if p.IsEnable {
 				for _, _preprocessor := range p.Preprocessors {
-					utils.Try(func() { _preprocessor(event, _bot.Api, _bot.Logger) }, func(err interface{}) {
-						_bot.Logger.Error("preprocessor {", utils.GetFunctionName(_preprocessor), "} error: ", err)
+					utils.Try(func() { _preprocessor(event, _bot.Api, _bot.Logger) }, func(err interface{}, tb string) {
+						_bot.Logger.Error("preprocessor {", utils.GetFunctionName(_preprocessor), "} error: ", err, "\n", tb)
 					})
 				}
 				_is_short_circuit := false
@@ -135,36 +135,36 @@ switch_label:
 		}
 		// 5. run normal listeners
 		for _, listener := range _bot.listeners_send_message {
-			utils.Try(func() { listener(event) }, func(err interface{}) {
-				_bot.Logger.Error("listener {", utils.GetFunctionName(listener), "} error: ", err)
+			utils.Try(func() { listener(event) }, func(err interface{}, tb string) {
+				_bot.Logger.Error("listener {", utils.GetFunctionName(listener), "} error: ", err, "\n", tb)
 			})
 		}
 	case events.CreateRobot:
 		event := events.Event2EventCreateRobot(event)
 		for _, listener := range _bot.listeners_create_robot {
-			utils.Try(func() { listener(event) }, func(err interface{}) {
-				_bot.Logger.Error("listener {", utils.GetFunctionName(listener), "} error: ", err)
+			utils.Try(func() { listener(event) }, func(err interface{}, tb string) {
+				_bot.Logger.Error("listener {", utils.GetFunctionName(listener), "} error: ", err, "\n", tb)
 			})
 		}
 	case events.DeleteRobot:
 		event := events.Event2EventDeleteRobot(event)
 		for _, listener := range _bot.listeners_delete_robot {
-			utils.Try(func() { listener(event) }, func(err interface{}) {
-				_bot.Logger.Error("listener {", utils.GetFunctionName(listener), "} error: ", err)
+			utils.Try(func() { listener(event) }, func(err interface{}, tb string) {
+				_bot.Logger.Error("listener {", utils.GetFunctionName(listener), "} error: ", err, "\n", tb)
 			})
 		}
 	case events.AddQuickEmoticon:
 		event := events.Event2EventAddQuickEmoticon(event)
 		for _, listener := range _bot.listeners_add_quick_emoticon {
-			utils.Try(func() { listener(event) }, func(err interface{}) {
-				_bot.Logger.Error("listener {", utils.GetFunctionName(listener), "} error: ", err)
+			utils.Try(func() { listener(event) }, func(err interface{}, tb string) {
+				_bot.Logger.Error("listener {", utils.GetFunctionName(listener), "} error: ", err, "\n", tb)
 			})
 		}
 	case events.AuditCallback:
 		event := events.Event2EventAuditCallback(event)
 		for _, listener := range _bot.listeners_audit_callback {
-			utils.Try(func() { listener(event) }, func(err interface{}) {
-				_bot.Logger.Error("listener {", utils.GetFunctionName(listener), "} error: ", err)
+			utils.Try(func() { listener(event) }, func(err interface{}, tb string) {
+				_bot.Logger.Error("listener {", utils.GetFunctionName(listener), "} error: ", err, "\n", tb)
 			})
 		}
 	default:
