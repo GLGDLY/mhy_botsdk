@@ -1,6 +1,6 @@
 <div align="center">
 
-![mhy_botsdk](https%3A%2F%2Fsocialify.git.ci%2FGLGDLY%2Fqg_botsdk%2Fimage%3Fdescription%3D1%26font%3DSource%20Code%20Pro%26forks%3D1%26issues%3D1%26language%3D1%26logo%3Dhttps%3A%2F%2Fdby.miyoushe.com%2Ffavicon.png%3Fraw%3Dtrue%26name%3D1%26owner%3D1%26pattern%3DFloating%20Cogs%26pulls%3D1%26stargazers%3D1%26theme%3DLight)
+![mhy_botsdk](https://socialify.git.ci/GLGDLY/mhy_botsdk/image?forks=1&issues=1&language=1&logo=https%3A%2F%2Fdby.miyoushe.com%2Ffavicon.png&name=1&owner=1&pattern=Floating%20Cogs&pulls=1&stargazers=1&theme=Light)
 
 [![Language](https://img.shields.io/badge/language-go-green.svg?style=plastic)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-orange.svg?style=plastic)](https://github.com/GLGDLY/mhy_botsdk/blob/master/LICENSE)
