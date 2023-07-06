@@ -1,18 +1,28 @@
-# mhy_botsdk
-
 <div align="center">
 
-**一款米哈游大别野机器人的Go SDK**
+![mhy_botsdk](https%3A%2F%2Fsocialify.git.ci%2FGLGDLY%2Fqg_botsdk%2Fimage%3Fdescription%3D1%26font%3DSource%20Code%20Pro%26forks%3D1%26issues%3D1%26language%3D1%26logo%3Dhttps%3A%2F%2Fdby.miyoushe.com%2Ffavicon.png%3Fraw%3Dtrue%26name%3D1%26owner%3D1%26pattern%3DFloating%20Cogs%26pulls%3D1%26stargazers%3D1%26theme%3DLight)
 
 [![Language](https://img.shields.io/badge/language-go-green.svg?style=plastic)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-orange.svg?style=plastic)](https://github.com/GLGDLY/mhy_botsdk/blob/master/LICENSE)
 [![Go](https://img.shields.io/github/v/tag/GLGDLY/mhy_botsdk.svg?style=plastic)](https://pkg.go.dev/github.com/GLGDLY/mhy_botsdk)
 
+✨一款米哈游大别野机器人的Go SDK✨
+
 </div>
 
 - 基本完善所有事件和API，并支持同时运行多个实例（支持同端口、同路径运行多个拥有不同监听器的机器人）
-- 特别针对消息类型事件，配有OnCommand、Preprocessor、Reply等拓展处理器
+- 特别针对消息类型事件，配有OnCommand、Preprocessor、Reply、WaifForCommand等拓展处理器
 - 具备Plugins模块，允许使用外部模块直接编写应用
+- 内置消息过滤器，自动过滤重复消息
+
+**实例**
+
+> 请参阅[examples](./examples)
+
+- [exmaple1](./examples/exmaple1_basic/exmaple1_basic.go)：简单的机器人，包含了消息处理器、指令处理器、事件监听器
+- [exmaple2](./examples/example2_multi_bot/example2_multi_bot.go)：多机器人同时允许
+- [exmaple3](./examples/exmaple3_plugins)：简单的插件结构
+- [exmaple4](./examples/exmaple4_wait_for/exmaple4_wait_for.go)：机器人暂停当前消息处理链，等待用户输入（以简单的猜数字机器人为例子）
 
 *由于官方文档与实际存在不少差异，目前并不能确保所有消息事件和API完全正确*
 

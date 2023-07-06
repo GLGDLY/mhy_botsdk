@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"reflect"
 	"sync"
+	"time"
 
 	apis "github.com/GLGDLY/mhy_botsdk/apis"
 	commands "github.com/GLGDLY/mhy_botsdk/commands"
@@ -20,10 +21,11 @@ import (
 )
 
 type bot struct {
-	base     models.BotBase // 机器人基本信息
-	path_key string
-	addr_key string
-	svr      *http.Server
+	base           models.BotBase // 机器人基本信息
+	path_key       string
+	addr_key       string
+	svr            *http.Server
+	filter_manager *filterManager // used to filter event that passed repeatly in a short time
 	/* 事件监听器开始 */
 	listeners_join_villa         []events.BotListenerJoinVilla
 	listeners_send_message       []events.BotListenerSendMessage
@@ -38,6 +40,7 @@ type bot struct {
 	plugins                              map[string]*plugin.Plugin // 插件列表
 	on_commands                          []commands.OnCommand      // 处理消息事件的指令列表
 	preprocessors                        []commands.Preprocessor   // 消息事的预处理器，用于在运行指令列表和监听器之前处理事件
+	wait_for_command_registers           []waitForCommandRegister  // 用户处理消息时暂停等待指令的处理列表
 	Api                                  *apis.ApiBase             // api接口
 	Logger                               logger.LoggerInterface    // 日志记录器
 }
@@ -58,12 +61,130 @@ var bot_context_manager map[string]*bot_context = make(map[string]*bot_context) 
 
 /* context managers end */
 
+func processEvent(event events.Event) {
+	_id := event.Event.Robot.Template.Id
+	_bot_ctx, ok := bot_context_manager[_id] // find bot ctx by id to allow multiple bot running on same port &|| path
+	if !ok {
+		fmt.Println("bot id: ", _id, " not found in ctx: ", bot_context_manager)
+		return
+	}
+
+	_bot := _bot_ctx.bot
+
+	event_id := event.Event.Id
+	if _bot.filter_manager.needFilter(event_id) {
+		_bot.Logger.Debugf("filter repeat event: %v+\n", event)
+		return
+	} else {
+		_bot.filter_manager.add(event_id)
+	}
+
+	if _bot.use_default_logger {
+		_bot.Logger.Debugf("receive event: %v+\n", event)
+	}
+	event_type := event.Event.Type
+switch_label:
+	switch event_type {
+	case events.JoinVilla:
+		event := events.Event2EventJoinVilla(event)
+		for _, listener := range _bot.listeners_join_villa {
+			utils.Try(func() { listener(event) }, func(err interface{}) {
+				_bot.Logger.Error("listener {", utils.GetFunctionName(listener), "} error: ", err)
+			})
+		}
+	case events.SendMessage:
+		event := events.Event2EventSendMessage(event, _bot.Api)
+		if _bot.is_filter_self_msg && event.Data.Content.User.Id == _bot.base.ID {
+			break switch_label
+		}
+		// 1. run preprocessors
+		for _, _preprocessor := range _bot.preprocessors {
+			utils.Try(func() { _preprocessor(event) }, func(err interface{}) {
+				_bot.Logger.Error("preprocessor {", utils.GetFunctionName(_preprocessor), "} error: ", err)
+			})
+		}
+		// 2. run wait_for command registers
+		if _bot.checkWaifForCommand(event) {
+			break switch_label
+		}
+		// 3. run plugins
+		for _, p := range _bot.plugins {
+			if p.IsEnable {
+				for _, _preprocessor := range p.Preprocessors {
+					utils.Try(func() { _preprocessor(event, _bot.Api, _bot.Logger) }, func(err interface{}) {
+						_bot.Logger.Error("preprocessor {", utils.GetFunctionName(_preprocessor), "} error: ", err)
+					})
+				}
+				_is_short_circuit := false
+				for _, _command := range p.OnCommand {
+					if _command.CheckCommand(event, _bot.Logger, _bot.Api) {
+						_is_short_circuit = true
+						break // short circuit for plugin's internal commands
+					}
+				}
+				if _is_short_circuit && _bot.is_plugins_short_circuit_affect_main {
+					break switch_label // short circuit for all commands
+				}
+			}
+		}
+		// 4. run on commands
+		for _, _command := range _bot.on_commands {
+			if _command.CheckCommand(event, _bot.Logger, _bot.Api) {
+				break switch_label // short circuit
+			}
+		}
+		// 5. run normal listeners
+		for _, listener := range _bot.listeners_send_message {
+			utils.Try(func() { listener(event) }, func(err interface{}) {
+				_bot.Logger.Error("listener {", utils.GetFunctionName(listener), "} error: ", err)
+			})
+		}
+	case events.CreateRobot:
+		event := events.Event2EventCreateRobot(event)
+		for _, listener := range _bot.listeners_create_robot {
+			utils.Try(func() { listener(event) }, func(err interface{}) {
+				_bot.Logger.Error("listener {", utils.GetFunctionName(listener), "} error: ", err)
+			})
+		}
+	case events.DeleteRobot:
+		event := events.Event2EventDeleteRobot(event)
+		for _, listener := range _bot.listeners_delete_robot {
+			utils.Try(func() { listener(event) }, func(err interface{}) {
+				_bot.Logger.Error("listener {", utils.GetFunctionName(listener), "} error: ", err)
+			})
+		}
+	case events.AddQuickEmoticon:
+		event := events.Event2EventAddQuickEmoticon(event)
+		for _, listener := range _bot.listeners_add_quick_emoticon {
+			utils.Try(func() { listener(event) }, func(err interface{}) {
+				_bot.Logger.Error("listener {", utils.GetFunctionName(listener), "} error: ", err)
+			})
+		}
+	case events.AuditCallback:
+		event := events.Event2EventAuditCallback(event)
+		for _, listener := range _bot.listeners_audit_callback {
+			utils.Try(func() { listener(event) }, func(err interface{}) {
+				_bot.Logger.Error("listener {", utils.GetFunctionName(listener), "} error: ", err)
+			})
+		}
+	default:
+		_bot.Logger.Warnf("unknown event type: %v\n", event_type)
+	}
+}
+
 func hook(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" || r.Header.Get("Content-Type") != "application/json" {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(`{"message":"bad request","retcode":-1}`))
 		return
 	}
+
+	defer func() { // ensure response
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"message":"","retcode":0}`))
+	}()
+
 	var event events.Event
 	err := json.NewDecoder(r.Body).Decode(&event)
 	if err != nil {
@@ -80,100 +201,8 @@ func hook(w http.ResponseWriter, r *http.Request) {
 			_bot.Logger.Error("decode event error (" + err.Error() + ", " + err_read.Error() + ")")
 		}
 	} else {
-		_id := event.Event.Robot.Template.Id
-		_bot_ctx, ok := bot_context_manager[_id] // find bot ctx by id to allow multiple bot running on same port &|| path
-		if !ok {
-			fmt.Println("bot id: ", _id, " not found in ctx: ", bot_context_manager)
-			return
-		}
-		_bot := _bot_ctx.bot
-		if _bot.use_default_logger {
-			_bot.Logger.Debugf("receive event: %v+\n", event)
-		}
-		event_type := event.Event.Type
-	switch_label:
-		switch event_type {
-		case events.JoinVilla:
-			event := events.Event2EventJoinVilla(event)
-			for _, listener := range _bot.listeners_join_villa {
-				utils.Try(func() { listener(event) }, func(err interface{}) {
-					_bot.Logger.Error("listener {", utils.GetFunctionName(listener), "} error: ", err)
-				})
-			}
-		case events.SendMessage:
-			event := events.Event2EventSendMessage(event, _bot.Api)
-			if _bot.is_filter_self_msg && event.Data.Content.User.Id == _bot.base.ID {
-				break switch_label
-			}
-			for _, _preprocessor := range _bot.preprocessors {
-				utils.Try(func() { _preprocessor(event) }, func(err interface{}) {
-					_bot.Logger.Error("preprocessor {", utils.GetFunctionName(_preprocessor), "} error: ", err)
-				})
-			}
-			for _, p := range _bot.plugins {
-				if p.IsEnable {
-					for _, _preprocessor := range p.Preprocessors {
-						utils.Try(func() { _preprocessor(event, _bot.Api, _bot.Logger) }, func(err interface{}) {
-							_bot.Logger.Error("preprocessor {", utils.GetFunctionName(_preprocessor), "} error: ", err)
-						})
-					}
-					_is_short_circuit := false
-					for _, _command := range p.OnCommand {
-						if _command.CheckCommand(event, _bot.Logger, _bot.Api) {
-							_is_short_circuit = true
-							break // short circuit for plugin's internal commands
-						}
-					}
-					if _is_short_circuit && _bot.is_plugins_short_circuit_affect_main {
-						break switch_label // short circuit for all commands
-					}
-				}
-			}
-			for _, _command := range _bot.on_commands {
-				if _command.CheckCommand(event, _bot.Logger, _bot.Api) {
-					break switch_label // short circuit
-				}
-			}
-			for _, listener := range _bot.listeners_send_message {
-				utils.Try(func() { listener(event) }, func(err interface{}) {
-					_bot.Logger.Error("listener {", utils.GetFunctionName(listener), "} error: ", err)
-				})
-			}
-		case events.CreateRobot:
-			event := events.Event2EventCreateRobot(event)
-			for _, listener := range _bot.listeners_create_robot {
-				utils.Try(func() { listener(event) }, func(err interface{}) {
-					_bot.Logger.Error("listener {", utils.GetFunctionName(listener), "} error: ", err)
-				})
-			}
-		case events.DeleteRobot:
-			event := events.Event2EventDeleteRobot(event)
-			for _, listener := range _bot.listeners_delete_robot {
-				utils.Try(func() { listener(event) }, func(err interface{}) {
-					_bot.Logger.Error("listener {", utils.GetFunctionName(listener), "} error: ", err)
-				})
-			}
-		case events.AddQuickEmoticon:
-			event := events.Event2EventAddQuickEmoticon(event)
-			for _, listener := range _bot.listeners_add_quick_emoticon {
-				utils.Try(func() { listener(event) }, func(err interface{}) {
-					_bot.Logger.Error("listener {", utils.GetFunctionName(listener), "} error: ", err)
-				})
-			}
-		case events.AuditCallback:
-			event := events.Event2EventAuditCallback(event)
-			for _, listener := range _bot.listeners_audit_callback {
-				utils.Try(func() { listener(event) }, func(err interface{}) {
-					_bot.Logger.Error("listener {", utils.GetFunctionName(listener), "} error: ", err)
-				})
-			}
-		default:
-			_bot.Logger.Warnf("unknown event type: %v\n", event_type)
-		}
+		go processEvent(event) // use goroutine to avoid blocking (especially handle wait_for)
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"message":"","retcode":0}`))
 }
 
 // NewBot 创建一个机器人实例，bot_id 为机器人的id，bot_secret 为机器人的secret，path 为接收事件的路径（如"/"），addr 为接收事件的地址（如":8888"）；
@@ -187,6 +216,7 @@ func NewBot(bot_id, bot_secret, path, addr string) *bot {
 		base:                                 bot_base,
 		addr_key:                             addr,
 		path_key:                             path,
+		filter_manager:                       &filterManager{entries: make(map[string]time.Time)},
 		listeners_join_villa:                 []events.BotListenerJoinVilla{},
 		listeners_send_message:               []events.BotListenerSendMessage{},
 		listeners_create_robot:               []events.BotListenerCreateRobot{},
@@ -198,9 +228,12 @@ func NewBot(bot_id, bot_secret, path, addr string) *bot {
 		is_filter_self_msg:                   true,
 		on_commands:                          []commands.OnCommand{},
 		preprocessors:                        []commands.Preprocessor{},
+		wait_for_command_registers:           []waitForCommandRegister{},
 		Api:                                  &apis.ApiBase{Base: bot_base},
 		Logger:                               logger.NewDefaultLogger(bot_id),
 	}
+
+	go _bot.filter_manager.loop()
 
 	port_already_exists := false
 	var port_exists_svr_ptr *server_context

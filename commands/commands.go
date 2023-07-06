@@ -77,7 +77,7 @@ func (p *OnCommand) CheckCommand(data events.EventSendMessage, _logger logger.Lo
 		p.regex = regexp.MustCompile(p.Regex)
 	}
 	if p.regex != nil {
-		if p.regex.MatchString(msg) {
+		if p.regex.FindString(msg) != "" {
 			if p.processCommand(data, _logger, _api) {
 				return true
 			}

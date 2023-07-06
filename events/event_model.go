@@ -2,6 +2,7 @@ package events
 
 import (
 	"encoding/json"
+	"strings"
 
 	api_models "github.com/GLGDLY/mhy_botsdk/api_models"
 	apis "github.com/GLGDLY/mhy_botsdk/apis"
@@ -201,8 +202,11 @@ type Event struct {
 // 获取消息内容，is_treat为true时，如果消息内容以/开头，则去掉/
 func (e *EventSendMessage) GetContent(is_treat bool) string {
 	content := e.Data.Content.Content.Text
-	if is_treat && content[0] == '/' {
-		return content[1:]
+	if is_treat {
+		at := "@" + e.Robot.Template.Name
+		content = strings.Replace(content, at, "", -1)
+		content = strings.TrimSpace(content)
+		content = strings.TrimLeft(content, "/")
 	}
 	return content
 }

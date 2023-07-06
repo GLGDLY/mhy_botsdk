@@ -8,7 +8,7 @@ import (
 	apis "github.com/GLGDLY/mhy_botsdk/apis"
 	events "github.com/GLGDLY/mhy_botsdk/events"
 	logger "github.com/GLGDLY/mhy_botsdk/logger"
-	"github.com/GLGDLY/mhy_botsdk/utils"
+	utils "github.com/GLGDLY/mhy_botsdk/utils"
 )
 
 /* Plugins version of commands.go */
@@ -85,7 +85,7 @@ func (p *OnCommand) CheckCommand(data events.EventSendMessage, _logger logger.Lo
 		p.regex = regexp.MustCompile(p.Regex)
 	}
 	if p.regex != nil {
-		if p.regex.MatchString(msg) {
+		if p.regex.FindString(msg) != "" {
 			if p.processCommand(data, _logger, _api) {
 				return true
 			}
