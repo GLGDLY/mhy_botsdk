@@ -171,19 +171,33 @@ func (msg MsgInputModel) SetPost(post_id string) error {
 	return nil
 }
 
-// return a copy of msg
-func (msg MsgInputModel) Finialize(room_id uint64) MsgInputModel {
-	// copy
+// recursively copy whole map
+func (msg MsgInputModel) deepCopy() MsgInputModel {
 	_msg := make(MsgInputModel)
 	for k, v := range msg {
-		_msg[k] = v
+		_, ok := v.(MsgInputModel)
+		if ok {
+			_msg[k] = v.(MsgInputModel).deepCopy()
+		} else {
+			_msg[k] = v
+		}
 	}
+	return _msg
+}
+
+// return a deep copy of msg
+func (msg MsgInputModel) Finialize(room_id uint64) MsgInputModel {
+	_msg := msg.deepCopy()
 
 	if MsgContentType(_msg["object_name"].(MsgContentType)) == MsgTypeText {
 		_, ok := _msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["text"].(string)
 		if !ok {
 			_msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["text"] =
 				_msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["text"].(*bytes.Buffer).String()
+		}
+		if len(_msg["msg_content"].(MsgInputModel)["mentionedInfo"].(MsgInputModel)["userIdList"].([]string)) == 0 &&
+			_msg["msg_content"].(MsgInputModel)["mentionedInfo"].(MsgInputModel)["type"].(MsgMentionType) == MentionUser {
+			delete(_msg["msg_content"].(MsgInputModel), "mentionedInfo")
 		}
 	}
 
