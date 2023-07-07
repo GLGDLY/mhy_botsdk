@@ -43,6 +43,7 @@ type bot struct {
 	wait_for_command_registers           []waitForCommandRegister  // 用户处理消息时暂停等待指令的处理列表
 	Api                                  *apis.ApiBase             // api接口
 	Logger                               logger.LoggerInterface    // 日志记录器
+	abstract_bot                         *plugin.AbstractBot       // bot的抽象类，用于为插件提供基础机器人功能
 }
 
 /* context managers start */
@@ -111,13 +112,13 @@ switch_label:
 		for _, p := range _bot.plugins {
 			if p.IsEnable {
 				for _, _preprocessor := range p.Preprocessors {
-					utils.Try(func() { _preprocessor(event, _bot.Api, _bot.Logger) }, func(err interface{}, tb string) {
+					utils.Try(func() { _preprocessor(event, _bot.abstract_bot) }, func(err interface{}, tb string) {
 						_bot.Logger.Error("preprocessor {", utils.GetFunctionName(_preprocessor), "} error: ", err, "\n", tb)
 					})
 				}
 				_is_short_circuit := false
 				for _, _command := range p.OnCommand {
-					if _command.CheckCommand(event, _bot.Logger, _bot.Api) {
+					if _command.CheckCommand(event, _bot.abstract_bot) {
 						_is_short_circuit = true
 						break // short circuit for plugin's internal commands
 					}
@@ -231,6 +232,11 @@ func NewBot(bot_id, bot_secret, path, addr string) *bot {
 		wait_for_command_registers:           []waitForCommandRegister{},
 		Api:                                  &apis.ApiBase{Base: bot_base},
 		Logger:                               logger.NewDefaultLogger(bot_id),
+	}
+	_bot.abstract_bot = &plugin.AbstractBot{
+		Api:            _bot.Api,
+		Logger:         _bot.Logger,
+		WaitForCommand: _bot.WaitForCommand,
 	}
 
 	go _bot.filter_manager.loop()
@@ -447,7 +453,6 @@ func (_bot *bot) Start() error {
 			break
 		}
 	}
-	var err error
 	if _bot_ctx.svr_ctx.is_running {
 		_bot_ctx.svr_ctx.wg.Wait()
 		return nil
@@ -455,9 +460,10 @@ func (_bot *bot) Start() error {
 		_bot_ctx.svr_ctx.is_running = true
 		_bot_ctx.svr_ctx.wg.Add(1)
 		defer _bot_ctx.svr_ctx.wg.Done()
-		err = _bot.svr.ListenAndServe()
+		err := _bot.svr.ListenAndServe()
+		_bot.Logger.Error("机器人 {%v} 停止监听 localhost%v : %v\n", _bot.base.ID, _bot.svr.Addr, err)
+		return err
 	}
-	return err
 }
 
 func StartAllBot() {

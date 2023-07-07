@@ -5,14 +5,15 @@
 [![Language](https://img.shields.io/badge/language-go-green.svg?style=plastic)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-orange.svg?style=plastic)](https://github.com/GLGDLY/mhy_botsdk/blob/master/LICENSE)
 [![Go](https://img.shields.io/github/v/tag/GLGDLY/mhy_botsdk.svg?style=plastic)](https://pkg.go.dev/github.com/GLGDLY/mhy_botsdk)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/2724d28e0a564850ae0b65fa0f1089b4)](https://app.codacy.com/gh/GLGDLY/mhy_botsdk/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
-✨一款米哈游大别野机器人的Go SDK✨
+✨ 一款米哈游大别野机器人的 Go SDK✨
 
 </div>
 
-- 基本完善所有事件和API，并支持同时运行多个实例（支持同端口、同路径运行多个拥有不同监听器的机器人）
-- 特别针对消息类型事件，配有OnCommand、Preprocessor、Reply、WaifForCommand等拓展处理器
-- 具备Plugins模块，允许使用外部模块直接编写应用
+- 基本完善所有事件和 API，并支持同时运行多个实例（支持同端口、同路径运行多个拥有不同监听器的机器人）
+- 特别针对消息类型事件，配有 OnCommand、Preprocessor、Reply、WaifForCommand 等拓展处理器
+- 具备 Plugins 模块，允许使用外部模块直接编写应用
 - 内置消息过滤器，自动过滤重复消息
 
 **实例**
@@ -24,7 +25,17 @@
 - [example3](./examples/example3_plugins)：简单的插件结构
 - [example4](./examples/example4_wait_for/example4_wait_for.go)：机器人暂停当前消息处理链，等待用户输入（以简单的猜数字机器人为例子）
 
-*由于官方文档与实际存在不少差异，目前并不能确保所有消息事件和API完全正确*
+_由于官方文档与实际存在不少差异，目前并不能确保所有消息事件和 API 完全正确_
+
+**Import**
+
+- `"github.com/GLGDLY/mhy_botsdk/bot"`：机器人基础模块，包含机器人实例、事件监听器、消息处理器等
+- `"github.com/GLGDLY/mhy_botsdk/events"`：事件模块，包含所有事件的模型
+- `"github.com/GLGDLY/mhy_botsdk/apis"`：API 模块，包含所有 API 的处理器
+- `"github.com/GLGDLY/mhy_botsdk/api_models"`：API 模块，包含所有 API 的模型
+- `"github.com/GLGDLY/mhy_botsdk/commands"`：指令模块，包含指令处理器
+- `"github.com/GLGDLY/mhy_botsdk/plugins"`：插件模块，包含插件处理器
+- `"github.com/GLGDLY/mhy_botsdk/utils"`：辅助工具模块，包含一些实用函数
 
 ## 简易使用
 
@@ -95,7 +106,7 @@ func msg_handler(data bot_events.EventSendMessage) { // 最后触发监听器，
 
 func main() {
     bot.AddPreprocessor(msg_preprocessor)
-    
+
     bot.AddOnCommand(bot_commands.OnCommand{
         Command:        []string{"MyCommand1", "hello world"}, // 命令匹配：包含 "MyCommand1" 或 "hello world" 的消息
         Listener:       MyCommand1, // 设置回调函数为 MyCommand1
@@ -117,34 +128,36 @@ func main() {
      * 对于插件，可以通过 AddPlugin() 方法添加插件；
      * 整体消息处理的运行与短路顺序为： [main]预处理器 -> [插件]预处理器 -> [插件]令处理器 -> [main]命令处理器 -> [main]事件监听器；
      * 如以上例子，如输入"hello world"，将会执行MyCommand1，然后短路，不执行msg_handler的"hello"指令；而如果输入"hello 123"，则会执行msg_handler的"hello"指令 */
-    
+
     bot_base.StartAllBot() // 启动所有机器人
 }
 ```
 
 ## 消息结构
 
-- SDK的事件类型模型存放在"github.com/GLGDLY/mhy_botsdk/events"中
-- 事件类型EventType分为6种event：`JoinVilla`,`SendMessage`,`CreateRobot`,`DeleteRobot`,`AddQuickEmoticon`,`AuditCallback`
-  - `AddListener`的注册监听器也相应分为了6种：`AddListenerJoinVilla`,`AddListenerSendMessage`,`AddListenerCreateRobot`,`AddListenerDeleteRobot`,`AddListenerAddQuickEmoticon`,`AddListenerAuditCallback`
-- 事件数据结构Event细分成6个子事件：`EventJoinVilla`,`EventSendMessage`,`EventCreateRobot`,`EventDeleteRobot`,`EventAddQuickEmoticon`,`EventAuditCallback`
+- SDK 的事件类型模型存放在"github.com/GLGDLY/mhy_botsdk/events"中
+- 事件类型 EventType 分为 6 种 event：`JoinVilla`,`SendMessage`,`CreateRobot`,`DeleteRobot`,`AddQuickEmoticon`,`AuditCallback`
+  - `AddListener`的注册监听器也相应分为了 6 种：`AddListenerJoinVilla`,`AddListenerSendMessage`,`AddListenerCreateRobot`,`AddListenerDeleteRobot`,`AddListenerAddQuickEmoticon`,`AddListenerAuditCallback`
+- 事件数据结构 Event 细分成 6 个子事件：`EventJoinVilla`,`EventSendMessage`,`EventCreateRobot`,`EventDeleteRobot`,`EventAddQuickEmoticon`,`EventAuditCallback`
   - 事件数据结构将作为参数传入注册的事件回调函数
-- 由于本SDK针对不同事件，设置了不同的消息监听器函数接口，我们得以减少官方事件数据中extend_data的“套娃”设计，事件的数据结构，原来的`Event`->`extend_data`->`event_data`->`JoinVilla`/`SendMessage`....将简化为`Event`->`Data`，`Data`下直接包含各个事件的扩展数据
+- 由于本 SDK 针对不同事件，设置了不同的消息监听器函数接口，我们得以减少官方事件数据中 extend_data 的“套娃”设计，事件的数据结构，原来的`Event`->`extend_data`->`event_data`->`JoinVilla`/`SendMessage`....将简化为`Event`->`Data`，`Data`下直接包含各个事件的扩展数据
 
 ## API
 
-- API基本遵从官方API的结构，但存在特例：
-  - `SendMessage`(`EventSendMessage`中`Reply`为对其的包装器)：最后一个msg参数要求使用"github.com/GLGDLY/mhy_botsdk/api_models"中的`NewMsg`构造并传入
+- API 基本遵从官方 API 的结构，但存在特例：
+
+  - `SendMessage`(`EventSendMessage`中`Reply`为对其的包装器)：最后一个 msg 参数要求使用"github.com/GLGDLY/mhy_botsdk/api_models"中的`NewMsg`构造并传入
+
     - `NewMsg`需要传入`MsgTypeText`, `MsgTypeImage`, `MsgTypePost`之一指定类型
     - `NewMsg`会返回一个`MsgInputModel`结构，其中包含仅限`MsgTypeText`的方法：`AppendText`, `SetText`, `SetTextQuote`；仅限`MsgTypeImage`的方法： `SetImage`；仅限`MsgTypePost`的方法：`SetPost`
-    - 这种设计模式是为了分段式内部处理`entities`，方便用户无需执行配置消息json序列
+    - 这种设计模式是为了分段式内部处理`entities`，方便用户无需执行配置消息 json 序列
 
   - `Audit`：最后一个参数要求传入"github.com/GLGDLY/mhy_botsdk/api_models"中的`UserInputAudit`结构体
     - 方便处理可选参数
 
 ## 简易插件编写
 
-- 插件的OnCommand回调函数会增加两个参数，以使用当前机器人的api和logger
+- 插件的 OnCommand 回调函数会增加一个 AbstractBot 参数，以使用当前机器人的基础功能，如 API、Logger、WaitForCommand 等
 - 以下分为两个文件，其中`plugin1.go`为介绍插件的编写，`my_bot.go`为介绍加载插件
 
 ### plugin1.go：编写插件
@@ -154,24 +167,22 @@ package plugin1
 
 import (
     bot_api_models "github.com/GLGDLY/mhy_botsdk/api_models"
-    bot_apis "github.com/GLGDLY/mhy_botsdk/apis"
     bot_events "github.com/GLGDLY/mhy_botsdk/events"
-    bot_logger "github.com/GLGDLY/mhy_botsdk/logger"
     bot_plugins "github.com/GLGDLY/mhy_botsdk/plugins"
 )
 
-func command1(data bot_events.EventSendMessage, api *bot_apis.ApiBase, logger bot_logger.LoggerInterface) {
-    logger.Info("plugin1::command1")
+func command1(data bot_events.EventSendMessage, bot *bot_plugins.AbstractBot) {
+    bot.Logger.Info("plugin1::command1")
     reply, _ := bot_api_models.NewMsg(bot_api_models.MsgTypeText)
     reply.SetText("plugin1::command1")
-    logger.Info(data.Reply(reply))
+    bot.Logger.Info(data.Reply(reply))
 }
 
-func command2(data bot_events.EventSendMessage, api *bot_apis.ApiBase, logger bot_logger.LoggerInterface) {
-    logger.Info("plugin1::command2")
+func command2(data bot_events.EventSendMessage, bot *bot_plugins.AbstractBot) {
+    bot.Logger.Info("plugin1::command2")
     reply, _ := bot_api_models.NewMsg(bot_api_models.MsgTypeText)
     reply.SetText("plugin1::command2")
-    logger.Info(data.Reply(reply))
+    bot.Logger.Info(data.Reply(reply))
 }
 
 func init() {

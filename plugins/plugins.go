@@ -5,14 +5,12 @@ import (
 	"strings"
 
 	api_models "github.com/GLGDLY/mhy_botsdk/api_models"
-	apis "github.com/GLGDLY/mhy_botsdk/apis"
 	events "github.com/GLGDLY/mhy_botsdk/events"
-	logger "github.com/GLGDLY/mhy_botsdk/logger"
 	utils "github.com/GLGDLY/mhy_botsdk/utils"
 )
 
 /* Plugins version of commands.go */
-type plugin_msg_listener func(data events.EventSendMessage, _api *apis.ApiBase, _logger logger.LoggerInterface)
+type plugin_msg_listener func(data events.EventSendMessage, _bot *AbstractBot)
 
 type Preprocessor plugin_msg_listener
 type OnCommand struct {
@@ -32,18 +30,18 @@ type Plugin struct {
 	OnCommand     []OnCommand
 }
 
-func (p *OnCommand) processCommand(data events.EventSendMessage, _logger logger.LoggerInterface, _api *apis.ApiBase) bool {
+func (p *OnCommand) processCommand(data events.EventSendMessage, _bot *AbstractBot) bool {
 	at := "@" + data.Robot.Template.Name
 	if p.RequireAT && !strings.Contains(data.GetContent(false), at) {
 		return false
 	}
 	if p.RequireAdmin {
-		res, http_code, err := _api.GetMember(data.Robot.VillaId, data.Data.FromUserId)
+		res, http_code, err := _bot.Api.GetMember(data.Robot.VillaId, data.Data.FromUserId)
 		if err != nil {
-			_logger.Error("command listener {", utils.GetFunctionName(p.Listener), "} get member role info error: ", err)
+			_bot.Logger.Error("command listener {", utils.GetFunctionName(p.Listener), "} get member role info error: ", err)
 			return false
 		} else if http_code != 200 || res.Retcode != 0 {
-			_logger.Error("command listener {", utils.GetFunctionName(p.Listener), "} get member role info error: ", res)
+			_bot.Logger.Error("command listener {", utils.GetFunctionName(p.Listener), "} get member role info error: ", res)
 			return false
 		}
 		is_admin := false
@@ -57,25 +55,26 @@ func (p *OnCommand) processCommand(data events.EventSendMessage, _logger logger.
 			if p.AdminErrorMsg != "" {
 				msg, _ := api_models.NewMsg(api_models.MsgTypeText)
 				msg.SetText(p.AdminErrorMsg)
-				_api.SendMessage(data.Robot.VillaId, data.Data.RoomId, msg)
+				_bot.Api.SendMessage(data.Robot.VillaId, data.Data.RoomId, msg)
 				return true
 			}
 			return false
 		}
 	}
-	utils.Try(func() { p.Listener(data, _api, _logger) }, func(err interface{}, tb string) {
-		_logger.Error("command listener {", utils.GetFunctionName(p.Listener), "} error: ", err, "\n", tb)
+	utils.Try(func() { p.Listener(data, _bot) }, func(err interface{}, tb string) {
+		_bot.Logger.Error("command listener {", utils.GetFunctionName(p.Listener), "} error: ", err, "\n", tb)
 	})
 	return p.IsShortCircuit
 }
 
 // 内部检查当前消息是否符合触发条件
-func (p *OnCommand) CheckCommand(data events.EventSendMessage, _logger logger.LoggerInterface, _api *apis.ApiBase) bool {
+func (p *OnCommand) CheckCommand(data events.EventSendMessage, abstract_bot *AbstractBot) bool {
+
 	msg := data.GetContent(false)
 	if p.Command != nil {
 		for _, v := range p.Command {
 			if strings.Contains(msg, v) {
-				if p.processCommand(data, _logger, _api) {
+				if p.processCommand(data, abstract_bot) {
 					return true
 				}
 			}
@@ -86,7 +85,7 @@ func (p *OnCommand) CheckCommand(data events.EventSendMessage, _logger logger.Lo
 	}
 	if p.regex != nil {
 		if p.regex.FindString(msg) != "" {
-			if p.processCommand(data, _logger, _api) {
+			if p.processCommand(data, abstract_bot) {
 				return true
 			}
 		}
