@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -56,7 +56,7 @@ func (api *ApiBase) RequestHandler(villa_id uint64, request *http.Request, build
 	if resp.Header.Get("Content-Type") != "application/json" {
 		return resp.StatusCode, errors.New("Response Content-Type is not application/json")
 	}
-	data, _ := ioutil.ReadAll(resp.Body)
+	data, _ := io.ReadAll(resp.Body)
 	err = json.Unmarshal(data, resp_data)
 	if err != nil {
 		var v map[string]interface{}
