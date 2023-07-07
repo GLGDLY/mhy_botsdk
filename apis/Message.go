@@ -16,8 +16,8 @@ func (api *ApiBase) PinMessage(villa_id uint64, msg_uid string, is_cancel bool, 
 }
 
 func (api *ApiBase) RecallMessage(villa_id uint64, msg_uid string, room_id uint64, msg_time int64) (models.EmptyModel, int, error) {
-	query := map[string]interface{}{"msg_uid": msg_uid, "room_id": room_id, "msg_time": msg_time}
-	request, build_req_err := http.NewRequest("GET", api.parseParams(api.makeURL("/vila/api/bot/platform/recallMessage"), query), nil)
+	data := map[string]interface{}{"msg_uid": msg_uid, "room_id": room_id, "msg_time": msg_time}
+	request, build_req_err := http.NewRequest("POST", api.makeURL("/vila/api/bot/platform/recallMessage"), api.parseJSON(data))
 	var resp_data models.EmptyModel
 	http_status, err := api.RequestHandler(villa_id, request, build_req_err, &resp_data)
 	return resp_data, http_status, err
