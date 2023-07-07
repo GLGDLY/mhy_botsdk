@@ -137,23 +137,23 @@ func main() {
 
 -   SDK 的事件类型模型存放在"github.com/GLGDLY/mhy_botsdk/events"中
 -   事件类型 EventType 分为 6 种 event：`JoinVilla`,`SendMessage`,`CreateRobot`,`DeleteRobot`,`AddQuickEmoticon`,`AuditCallback`
-  -   `AddListener`的注册监听器也相应分为了 6 种：`AddListenerJoinVilla`,`AddListenerSendMessage`,`AddListenerCreateRobot`,`AddListenerDeleteRobot`,`AddListenerAddQuickEmoticon`,`AddListenerAuditCallback`
+    -   `AddListener`的注册监听器也相应分为了 6 种：`AddListenerJoinVilla`,`AddListenerSendMessage`,`AddListenerCreateRobot`,`AddListenerDeleteRobot`,`AddListenerAddQuickEmoticon`,`AddListenerAuditCallback`
 -   事件数据结构 Event 细分成 6 个子事件：`EventJoinVilla`,`EventSendMessage`,`EventCreateRobot`,`EventDeleteRobot`,`EventAddQuickEmoticon`,`EventAuditCallback`
-  -   事件数据结构将作为参数传入注册的事件回调函数
+    -   事件数据结构将作为参数传入注册的事件回调函数
 -   由于本 SDK 针对不同事件，设置了不同的消息监听器函数接口，我们得以减少官方事件数据中 extend_data 的“套娃”设计，事件的数据结构，原来的`Event`->`extend_data`->`event_data`->`JoinVilla`/`SendMessage`....将简化为`Event`->`Data`，`Data`下直接包含各个事件的扩展数据
 
 ## API
 
 -   API 基本遵从官方 API 的结构，但存在特例：
 
-  -   `SendMessage`(`EventSendMessage`中`Reply`为对其的包装器)：最后一个 msg 参数要求使用"github.com/GLGDLY/mhy_botsdk/api_models"中的`NewMsg`构造并传入
+    -   `SendMessage`(`EventSendMessage`中`Reply`为对其的包装器)：最后一个 msg 参数要求使用"github.com/GLGDLY/mhy_botsdk/api_models"中的`NewMsg`构造并传入
 
-    -   `NewMsg`需要传入`MsgTypeText`, `MsgTypeImage`, `MsgTypePost`之一指定类型
-    -   `NewMsg`会返回一个`MsgInputModel`结构，其中包含仅限`MsgTypeText`的方法：`AppendText`, `SetText`, `SetTextQuote`；仅限`MsgTypeImage`的方法： `SetImage`；仅限`MsgTypePost`的方法：`SetPost`
-    -   这种设计模式是为了分段式内部处理`entities`，方便用户无需执行配置消息 json 序列
+        -   `NewMsg`需要传入`MsgTypeText`, `MsgTypeImage`, `MsgTypePost`之一指定类型
+        -   `NewMsg`会返回一个`MsgInputModel`结构，其中包含仅限`MsgTypeText`的方法：`AppendText`, `SetText`, `SetTextQuote`；仅限`MsgTypeImage`的方法： `SetImage`；仅限`MsgTypePost`的方法：`SetPost`
+        -   这种设计模式是为了分段式内部处理`entities`，方便用户无需执行配置消息 json 序列
 
-  -   `Audit`：最后一个参数要求传入"github.com/GLGDLY/mhy_botsdk/api_models"中的`UserInputAudit`结构体
-    -   方便处理可选参数
+    -   `Audit`：最后一个参数要求传入"github.com/GLGDLY/mhy_botsdk/api_models"中的`UserInputAudit`结构体
+        -   方便处理可选参数
 
 ## 简易插件编写
 
