@@ -2,6 +2,7 @@
 
 ![mhy_botsdk](https://socialify.git.ci/GLGDLY/mhy_botsdk/image?forks=1&issues=1&language=1&logo=https%3A%2F%2Fdby.miyoushe.com%2Ffavicon.png&name=1&owner=1&pattern=Floating%20Cogs&pulls=1&stargazers=1&theme=Light)
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/ab480ca0688745b48374b55912d41c3c)](https://app.codacy.com/gh/GLGDLY/mhy_botsdk?utm_source=github.com&utm_medium=referral&utm_content=GLGDLY/mhy_botsdk&utm_campaign=Badge_Grade)
 [![Language](https://img.shields.io/badge/language-go-green.svg?style=plastic)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-orange.svg?style=plastic)](https://github.com/GLGDLY/mhy_botsdk/blob/master/LICENSE)
 [![Go](https://img.shields.io/github/v/tag/GLGDLY/mhy_botsdk.svg?style=plastic)](https://pkg.go.dev/github.com/GLGDLY/mhy_botsdk)
