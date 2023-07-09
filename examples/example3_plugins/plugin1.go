@@ -1,23 +1,18 @@
 package main
 
 import (
-	bot_api_models "github.com/GLGDLY/mhy_botsdk/api_models"
 	bot_events "github.com/GLGDLY/mhy_botsdk/events"
 	bot_plugins "github.com/GLGDLY/mhy_botsdk/plugins"
 )
 
 func command1(data bot_events.EventSendMessage, bot *bot_plugins.AbstractBot) {
 	bot.Logger.Info("plugin1::command1")
-	reply, _ := bot_api_models.NewMsg(bot_api_models.MsgTypeText)
-	reply.SetText("plugin1::command1")
-	bot.Logger.Info(data.Reply(reply))
+	bot.Logger.Info(data.Reply("plugin1::command1"))
 }
 
 func command2(data bot_events.EventSendMessage, bot *bot_plugins.AbstractBot) {
 	bot.Logger.Info("plugin1::command2")
-	reply, _ := bot_api_models.NewMsg(bot_api_models.MsgTypeText)
-	reply.SetText("plugin1::command2")
-	bot.Logger.Info(data.Reply(reply))
+	bot.Logger.Info(data.Reply("plugin1::command2"))
 }
 
 func init() {

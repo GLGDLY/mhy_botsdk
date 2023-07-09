@@ -58,14 +58,14 @@ func msg_handler(data bot_events.EventSendMessage) {
 		reply.AppendText(bot_api_models.MsgEntityMentionAll{
 			Text: "@全体成员",
 		})
-		logger_dispatcher(data).Info(data.Reply(reply))
+		logger_dispatcher(data).Info(data.ReplyCustomize(reply))
 	} else {
 		reply.SetText("你好，我是机器人，你可以输入 hello 来和我",
 			bot_api_models.MsgEntityMentionRobot{
 				Text:  "@" + data.Robot.Template.Name,
 				BotID: data.Robot.Template.Id,
 			}, " 打招呼")
-		logger_dispatcher(data).Info(data.Reply(reply))
+		logger_dispatcher(data).Info(data.ReplyCustomize(reply))
 	}
 }
 
@@ -73,14 +73,14 @@ func MyCommand1(data bot_events.EventSendMessage) {
 	logger_dispatcher(data).Info("MyCommand1")
 	reply, _ := bot_api_models.NewMsg(bot_api_models.MsgTypeImage)
 	reply.SetImage("https://webstatic.mihoyo.com/vila/bot/doc/message_api/img/text_case.jpg", 1080, 310, 46000)
-	logger_dispatcher(data).Info(data.Reply(reply))
+	logger_dispatcher(data).Info(data.ReplyCustomize(reply))
 }
 
 func MyCommand2(data bot_events.EventSendMessage) {
 	logger_dispatcher(data).Info("MyCommand2")
 	reply, _ := bot_api_models.NewMsg(bot_api_models.MsgTypeText)
 	reply.SetText("MyCommand2")
-	logger_dispatcher(data).Info(data.Reply(reply))
+	logger_dispatcher(data).Info(data.ReplyCustomize(reply))
 }
 
 func main() {

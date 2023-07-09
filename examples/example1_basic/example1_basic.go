@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 
 	bot_api_models "github.com/GLGDLY/mhy_botsdk/api_models"
@@ -22,20 +23,21 @@ func MyCommand1(data bot_events.EventSendMessage) {
 	bot.Logger.Info("MyCommand1")
 	reply, _ := bot_api_models.NewMsg(bot_api_models.MsgTypeImage)                                              // 创建图片类型的消息体
 	reply.SetImage("https://webstatic.mihoyo.com/vila/bot/doc/message_api/img/text_case.jpg", 1080, 310, 46000) // 设置图片消息内容
-	bot.Logger.Info(data.Reply(reply))
+	bot.Logger.Info(data.ReplyCustomize(reply))
 }
 
 func MyCommand2(data bot_events.EventSendMessage) {
 	bot.Logger.Info("MyCommand2")
-	reply, _ := bot_api_models.NewMsg(bot_api_models.MsgTypeText) // 创建文本类型的消息体
-	reply.SetText("MyCommand2")                                   // 设置文本消息内容
-	bot.Logger.Info(data.Reply(reply))
+	fmt.Print(fmt.Sprintf("MyCommand2 <@%v> <@%v> <@everyone> <#%v>",
+		data.Robot.Template.Id, data.Data.FromUserId, data.Data.RoomId))
+	bot.Logger.Info(data.Reply(fmt.Sprintf("MyCommand2 <@%v> <@%v> <@everyone> <#%v>",
+		data.Robot.Template.Id, data.Data.FromUserId, data.Data.RoomId))) // 使用内嵌格式发送文本消息，内嵌格式按顺序为：@机器人（自己）、@发送者、@全体、#跳转房间
 }
 
 func msg_handler(data bot_events.EventSendMessage) { // 最后触发监听器，一般用于确保任何消息都有回复
 	bot.Logger.Info("default msg handler")
-	reply, _ := bot_api_models.NewMsg(bot_api_models.MsgTypeText)
-	if strings.Contains(data.GetContent(true), "hello") { // 判断消息内容是否包含 "hello"
+	reply, _ := bot_api_models.NewMsg(bot_api_models.MsgTypeText) // 创建文本类型的消息体
+	if strings.Contains(data.GetContent(true), "hello") {         // 判断消息内容是否包含 "hello"
 		reply.SetText("Hello World!",
 			bot_api_models.MsgEntityMentionUser{ // 为回复的消息加入@发送者的消息
 				Text:   "@" + data.Data.Nickname,
@@ -51,14 +53,14 @@ func msg_handler(data bot_events.EventSendMessage) { // 最后触发监听器，
 		reply.AppendText(bot_api_models.MsgEntityMentionAll{
 			Text: "@全体成员",
 		})
-		bot.Logger.Info(data.Reply(reply))
+		bot.Logger.Info(data.ReplyCustomize(reply))
 	} else {
 		reply.SetText("你好，我是机器人，你可以输入 hello 来和我",
 			bot_api_models.MsgEntityMentionRobot{ // 艾特机器人
 				Text:  "@" + data.Robot.Template.Name,
 				BotID: data.Robot.Template.Id,
 			}, " 打招呼")
-		bot.Logger.Info(data.Reply(reply))
+		bot.Logger.Info(data.ReplyCustomize(reply))
 	}
 }
 

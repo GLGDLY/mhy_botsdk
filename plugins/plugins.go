@@ -55,7 +55,7 @@ func (p *OnCommand) processCommand(data events.EventSendMessage, _bot *AbstractB
 			if p.AdminErrorMsg != "" {
 				msg, _ := api_models.NewMsg(api_models.MsgTypeText)
 				msg.SetText(p.AdminErrorMsg)
-				_bot.Api.SendMessage(data.Robot.VillaId, data.Data.RoomId, msg)
+				_bot.Api.SendMessageCustomize(data.Robot.VillaId, data.Data.RoomId, msg)
 				return true
 			}
 			return false

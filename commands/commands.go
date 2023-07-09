@@ -49,7 +49,7 @@ func (p *OnCommand) processCommand(data events.EventSendMessage, _logger logger.
 			if p.AdminErrorMsg != "" {
 				msg, _ := api_models.NewMsg(api_models.MsgTypeText)
 				msg.SetText(p.AdminErrorMsg)
-				_api.SendMessage(data.Robot.VillaId, data.Data.RoomId, msg)
+				_api.SendMessageCustomize(data.Robot.VillaId, data.Data.RoomId, msg)
 				return true
 			}
 			return false

@@ -30,7 +30,7 @@ func GuessingGame(data bot_events.EventSendMessage) {
 
 	reply, _ := bot_api_models.NewMsg(bot_api_models.MsgTypeText)
 	reply.SetText(AT, "猜数字游戏开始，输入 1-100 之间的数字")
-	bot.Logger.Info(data.Reply(reply))
+	bot.Logger.Info(data.ReplyCustomize(reply))
 
 	var identify string = fmt.Sprintf("guessing_game_%v", data.Data.FromUserId) // 用于标识此次游戏的唯一标识符
 	bot.CancelWaitForCommand(identify)                                          // 取消之前的等待指令（如不存在会返回error）
@@ -69,7 +69,7 @@ func GuessingGame(data bot_events.EventSendMessage) {
 				bot.Logger.Error(err)
 				reply.SetText(AT, "发生错误，游戏结束")
 			}
-			bot.Logger.Info(data.Reply(reply))
+			bot.Logger.Info(data.ReplyCustomize(reply))
 			return
 		}
 		num, conv_err := strconv.Atoi(regexp.MustCompile(num_reg).FindString(new_data.GetContent(true)))
@@ -80,7 +80,7 @@ func GuessingGame(data bot_events.EventSendMessage) {
 		if target == num {
 			reply, _ := bot_api_models.NewMsg(bot_api_models.MsgTypeText)
 			reply.SetText(AT, "恭喜你猜对了！")
-			bot.Logger.Info(new_data.Reply(reply))
+			bot.Logger.Info(new_data.ReplyCustomize(reply))
 			return
 		} else if target > num {
 			if num > min {
@@ -88,14 +88,14 @@ func GuessingGame(data bot_events.EventSendMessage) {
 			}
 			reply, _ := bot_api_models.NewMsg(bot_api_models.MsgTypeText)
 			reply.SetText(AT, fmt.Sprintf("[%v]太小了，范围 %v-%v", num, min, max))
-			bot.Logger.Info(new_data.Reply(reply))
+			bot.Logger.Info(new_data.ReplyCustomize(reply))
 		} else {
 			if num < max {
 				max = num
 			}
 			reply, _ := bot_api_models.NewMsg(bot_api_models.MsgTypeText)
 			reply.SetText(AT, fmt.Sprintf("[%v]太大了，范围 %v-%v", num, min, max))
-			bot.Logger.Info(new_data.Reply(reply))
+			bot.Logger.Info(new_data.ReplyCustomize(reply))
 		}
 	}
 }
@@ -108,7 +108,7 @@ func msg_handler(data bot_events.EventSendMessage) { // 最后触发监听器，
 			Text:  "@" + data.Robot.Template.Name,
 			BotID: data.Robot.Template.Id,
 		}, " 玩游戏呢")
-	bot.Logger.Info(data.Reply(reply))
+	bot.Logger.Info(data.ReplyCustomize(reply))
 }
 
 func main() {
