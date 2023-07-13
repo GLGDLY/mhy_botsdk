@@ -196,7 +196,7 @@ func hook(w http.ResponseWriter, r *http.Request) {
 		}
 		var raw_data []byte
 		_, err_read := r.Body.Read(raw_data)
-		if err != nil {
+		if err_read != nil {
 			_bot.Logger.Error("decode event error (" + err.Error() + "): " + string(raw_data))
 		} else {
 			_bot.Logger.Error("decode event error (" + err.Error() + ", " + err_read.Error() + ")")
