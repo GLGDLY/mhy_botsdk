@@ -54,9 +54,13 @@ func (api *ApiBase) RequestHandler(villa_id uint64, request *http.Request, build
 	}
 	defer resp.Body.Close()
 	if resp.Header.Get("Content-Type") != "application/json" {
-		return resp.StatusCode, errors.New("Response Content-Type is not application/json")
+		return resp.StatusCode, errors.New("response Content-Type is not application/json")
 	}
 	data, _ := io.ReadAll(resp.Body)
+
+	s := reflect.ValueOf(resp_data)
+	reflect.Indirect(s).FieldByName("APIBaseModel").FieldByName("RawData").SetString(string(data))
+
 	err = json.Unmarshal(data, resp_data)
 	if err != nil {
 		var v map[string]interface{}
@@ -68,7 +72,7 @@ func (api *ApiBase) RequestHandler(villa_id uint64, request *http.Request, build
 
 func (api *ApiBase) Request(villa_id uint64, request *http.Request) (*http.Response, error) {
 	request.Header.Set("x-rpc-bot_id", api.Base.ID)
-	request.Header.Set("x-rpc-bot_secret", api.Base.Secret)
+	request.Header.Set("x-rpc-bot_secret", api.Base.EncodedSecret)
 	request.Header.Set("x-rpc-bot_villa_id", utils.String(villa_id))
 	request.Header.Set("User-Agent", "github.com/GLGDLY/mhy_botsdk"+base.VERSION)
 	return api.session.Do(request)

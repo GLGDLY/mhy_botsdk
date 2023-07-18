@@ -15,6 +15,7 @@
 -   特别针对消息类型事件，配有 OnCommand、Preprocessor、Reply、WaifForCommand 等拓展处理器
 -   具备 Plugins 模块，允许使用外部模块直接编写应用
 -   内置消息过滤器，自动过滤重复消息
+-   底层使用gin构建，允许加入自定义路由（内部机制处理同端口同路径等复杂情况），方便集成页面应用供机器人使用（并校验用户）
 
 **实例**
 
@@ -54,7 +55,7 @@ import (
 // NewBot参数: id, secret, 路径, 端口
 // 下方例子会监听 localhost:8888/ 获取消息
 // 并验证事件的机器人ID是否符合
-var bot = bot_base.NewBot("bot_id", "bot_secret", "/", ":8888")
+var bot = bot_base.NewBot("bot_id", "bot_secret", "bot_pubkey", "/", ":8888")
 
 func msg_preprocessor(data bot_events.EventSendMessage) { // 借助preprocessor为所有消息记录log
     bot.Logger.Info("收到来自 " + data.Data.Nickname + " 的消息：" + data.GetContent(true))
@@ -128,7 +129,7 @@ func main() {
      * 整体消息处理的运行与短路顺序为： [main]预处理器 -> [插件]预处理器 -> [插件]令处理器 -> [main]命令处理器 -> [main]事件监听器；
      * 如以上例子，如输入"hello world"，将会执行MyCommand1，然后短路，不执行msg_handler的"hello"指令；而如果输入"hello 123"，则会执行msg_handler的"hello"指令 */
 
-    bot_base.StartAllBot() // 启动所有机器人
+    bot_base.StartAll() // 开始运行所有机器人和 HTTP 服务器
 }
 ```
 
@@ -220,10 +221,18 @@ import (
 )
 
 // 创建NewBot时会自动加载import了的插件
-var bot = bot_base.NewBot("bot_id", "bot_secret", "/", ":8888")
+var bot = bot_base.NewBot("bot_id", "bot_secret", "bot_pubkey", "/", ":8888")
 
 func main() {
     bot.SetPluginsShortCircuitAffectMain(true) // 设置插件的短路是否影响main中注册的指令和消息处理器
-    bot_base.StartAllBot() // 启动所有机器人
+    bot_base.StartAll() // 开始运行所有机器人和 HTTP 服务器
 }
 ```
+
+## 相关链接
+
+-   官方注册机器人：<https://open.miyoushe.com/#/login>
+
+-   官方API文档：<https://webstatic.mihoyo.com/vila/bot/doc/>
+
+-   SDK QQ交流群：<https://jq.qq.com/?_wv=1027&k=3NnWvGpz>

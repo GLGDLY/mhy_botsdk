@@ -3,8 +3,10 @@ package models
 import "time"
 
 type BotBase struct {
-	ID     string
-	Secret string
+	ID            string
+	Secret        string
+	PubKey        string
+	EncodedSecret string
 }
 
 type CommandBase struct {

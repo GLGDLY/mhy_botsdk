@@ -14,8 +14,8 @@ var bot_id1 = "bot_id1"
 var bot_id2 = "bot_id2"
 
 // SDK支持同端口同路径运行多个机器人，会根据事件的机器人ID判断并分发消息
-var test_bot = bot_base.NewBot(bot_id1, "bot_secret1", "/", ":8888") // test bot
-var bot = bot_base.NewBot(bot_id2, "bot_secret2", "/", ":8888")
+var test_bot = bot_base.NewBot(bot_id1, "bot_secret1", "bot_pubkey", "/", ":8888") // test bot
+var bot = bot_base.NewBot(bot_id2, "bot_secret2", "bot_pubkey", "/", ":8888")
 
 func logger_dispatcher(data bot_events.EventSendMessage) bot_logger.LoggerInterface {
 	switch data.Robot.Template.Id {

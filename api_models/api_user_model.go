@@ -111,12 +111,16 @@ func (msg MsgInputModel) appendText(text_len int, args ...interface{}) { // inte
 			msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["text"].(*bytes.Buffer).WriteString(arg.(MsgEntityVillaRoomLink).Text)
 			text_len += this_len
 		case MsgEntityLink:
-			this_len := len([]rune(arg.(MsgEntityLink).Text))
+			text := arg.(MsgEntityLink).Text
+			if text == "" {
+				text = arg.(MsgEntityLink).URL
+			}
+			this_len := len([]rune(text))
 			msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["entities"] = append(msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["entities"].([]MsgInputModel),
 				MsgInputModel{"entity": MsgInputModel{"type": MsgEntityLinkType, "url": arg.(MsgEntityLink).URL,
 					"requires_bot_access_token": arg.(MsgEntityLink).RequiresBotAccessToken},
 					"offset": text_len, "length": this_len})
-			msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["text"].(*bytes.Buffer).WriteString(arg.(MsgEntityLink).Text)
+			msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["text"].(*bytes.Buffer).WriteString(text)
 			text_len += this_len
 		default:
 			content_string := utils.String(arg)

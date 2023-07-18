@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"strings"
 
+	"github.com/gin-gonic/gin"
+
 	api_models "github.com/GLGDLY/mhy_botsdk/api_models"
 	apis "github.com/GLGDLY/mhy_botsdk/apis"
 )
@@ -214,11 +216,12 @@ func (e *EventSendMessage) GetContent(is_treat bool) string {
 // 在相应的房间回复消息 i.e. wrapper for api.SendMessage
 // 使用内嵌格式发送消息，并自动处理内部Entity（<@xxx>为艾特机器人或用户，<@everyone>为艾特全体，<#xxx>为跳转房间，<$xxx>为跳转连接）
 // 艾特用户会自动获取用户昵称，跳转房间会自动获取房间名称；艾特机器人会显示文字“机器人”，艾特全体会显示“全体成员”，跳转连接会显示链接自身
+// 使用\< 和 \> 可转义 < 和 >，不会被解析为Entity
 func (e *EventSendMessage) Reply(msg ...string) (api_models.SendMessageModel, int, error) {
 	return e.api.SendMessage(e.Robot.VillaId, e.Data.RoomId, msg...)
 }
 
-// 在相应的房间回复消息 i.e. wrapper for api.SendMessage
+// 在相应的房间回复消息 i.e. wrapper for api.SendMessageCustomize
 // 使用models.NewMsg创建消息，然后使用models.SetText等方法加入内容，最后使用此函数发送
 func (e *EventSendMessage) ReplyCustomize(msg api_models.MsgInputModel) (api_models.SendMessageModel, int, error) {
 	return e.api.SendMessageCustomize(e.Robot.VillaId, e.Data.RoomId, msg)
@@ -277,3 +280,6 @@ type BotListenerCreateRobot func(data EventCreateRobot)
 type BotListenerDeleteRobot func(data EventDeleteRobot)
 type BotListenerAddQuickEmoticon func(data EventAddQuickEmoticon)
 type BotListenerAuditCallback func(data EventAuditCallback)
+
+/* raw request listener */
+type BotListenerRawRequest func(c *gin.Context)

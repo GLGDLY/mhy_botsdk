@@ -3,6 +3,7 @@ package api_models
 type APIBaseModel struct {
 	Retcode int    `json:"retcode"`
 	Message string `json:"message"`
+	RawData string // 原始json数据
 }
 
 type EmptyModel struct {
@@ -219,5 +220,14 @@ type AuditModel struct {
 	APIBaseModel
 	Data struct {
 		AuditID string `json:"audit_id"`
+	} `json:"data"`
+}
+
+/* Image */
+
+type UploadImageModel struct {
+	APIBaseModel
+	Data struct {
+		NewURL string `json:"new_url"`
 	} `json:"data"`
 }

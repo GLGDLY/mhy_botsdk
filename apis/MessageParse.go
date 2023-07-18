@@ -9,9 +9,8 @@ import (
 	models "github.com/GLGDLY/mhy_botsdk/api_models"
 )
 
-func (api *ApiBase) messageParser(villa_id uint64, _msg ...string) (*models.MsgInputModel, error) {
+func (api *ApiBase) messageParser(msg *models.MsgInputModel, villa_id uint64, _msg_parts ...string) error {
 	/* for parsing */
-	msg, _ := models.NewMsg(models.MsgTypeText)
 	msg_buf := bytes.NewBufferString("")
 	is_entity := false
 	var entity_type *models.MsgEntityType = nil
@@ -19,11 +18,24 @@ func (api *ApiBase) messageParser(villa_id uint64, _msg ...string) (*models.MsgI
 	usernames := make(map[uint64]string)
 	roomnames := make(map[uint64]string)
 
-	for i, msg_part := range _msg {
+	skip_next_word := false
+	for i, msg_part := range _msg_parts {
 		for j, word := range msg_part {
+			// check for escape
+			if skip_next_word {
+				skip_next_word = false
+				msg_buf.WriteRune(word)
+				continue
+			}
+			if word == '\\' {
+				skip_next_word = true
+				continue
+
+			}
+			// check for entity
 			if word == '<' {
 				if is_entity {
-					return nil, fmt.Errorf(`invalid format, unexcepted "<" in position %d on msg arg %d`, j, i)
+					return fmt.Errorf(`invalid format, unexcepted "<" in position %d on msg arg %d`, j, i)
 				}
 				is_entity = true
 				msg.AppendText(msg_buf.String())
@@ -31,7 +43,7 @@ func (api *ApiBase) messageParser(villa_id uint64, _msg ...string) (*models.MsgI
 				entity_type = nil
 			} else if word == '>' {
 				if !is_entity {
-					return nil, fmt.Errorf(`invalid format, unexcepted ">" in position %d on msg arg %d`, j, i)
+					return fmt.Errorf(`invalid format, unexcepted ">" in position %d on msg arg %d`, j, i)
 				}
 				entity_content := msg_buf.String()
 				switch *entity_type {
@@ -50,16 +62,16 @@ func (api *ApiBase) messageParser(villa_id uint64, _msg ...string) (*models.MsgI
 					}
 					uid, error := strconv.ParseUint(entity_content, 10, 64)
 					if error != nil {
-						return nil, fmt.Errorf(`invalid format, invalid user id "%s" in position %d on msg arg %d`, entity_content, j, i)
+						return fmt.Errorf(`invalid format, invalid user id "%s" in position %d on msg arg %d`, entity_content, j, i)
 					}
 					username, ok := usernames[uid]
 					if !ok {
 						resp, http, err := api.GetMember(villa_id, uid)
 						if err != nil {
-							return nil, err
+							return err
 						}
 						if http != 200 || resp.Retcode != 0 {
-							return nil, fmt.Errorf(`failed to fetch user info, http code: %d, retcode: %d`, http, resp.Retcode)
+							return fmt.Errorf(`failed to fetch user info, http code: %d, retcode: %d`, http, resp.Retcode)
 						}
 						username = resp.Data.Member.Basic.Nickname
 						usernames[uid] = username
@@ -71,16 +83,16 @@ func (api *ApiBase) messageParser(villa_id uint64, _msg ...string) (*models.MsgI
 				case models.MsgEntityVillaRoomLinkType:
 					room_id, error := strconv.ParseUint(entity_content, 10, 64)
 					if error != nil {
-						return nil, fmt.Errorf(`invalid format, invalid room id "%s" in position %d on msg arg %d`, entity_content, j, i)
+						return fmt.Errorf(`invalid format, invalid room id "%s" in position %d on msg arg %d`, entity_content, j, i)
 					}
 					roomname, ok := roomnames[room_id]
 					if !ok {
 						resp, http, err := api.GetRoom(villa_id, room_id)
 						if err != nil {
-							return nil, err
+							return err
 						}
 						if http != 200 || resp.Retcode != 0 {
-							return nil, fmt.Errorf(`failed to fetch room info, http code: %d, retcode: %d`, http, resp.Retcode)
+							return fmt.Errorf(`failed to fetch room info, http code: %d, retcode: %d`, http, resp.Retcode)
 						}
 						roomname = resp.Data.Room.RoomName
 						roomnames[room_id] = roomname
@@ -92,7 +104,6 @@ func (api *ApiBase) messageParser(villa_id uint64, _msg ...string) (*models.MsgI
 					})
 				case models.MsgEntityLinkType:
 					msg.AppendText(models.MsgEntityLink{
-						Text:                   entity_content,
 						URL:                    entity_content,
 						RequiresBotAccessToken: false,
 					})
@@ -118,8 +129,8 @@ func (api *ApiBase) messageParser(villa_id uint64, _msg ...string) (*models.MsgI
 		}
 	}
 	if is_entity {
-		return nil, fmt.Errorf(`invalid format, unexcepted EOF till last msg arg (start with "<" but not end with ">")`)
+		return fmt.Errorf(`invalid format, unexcepted EOF till last msg arg (start with "<" but not end with ">")`)
 	}
 	msg.AppendText(msg_buf.String())
-	return &msg, nil
+	return nil
 }

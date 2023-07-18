@@ -5,7 +5,7 @@ import (
 )
 
 // 创建NewBot时会自动加载import了的插件
-var bot = bot_base.NewBot("bot_id", "bot_secret", "/", ":8888")
+var bot = bot_base.NewBot("bot_id", "bot_secret", "/", "bot_pubkey", ":8888")
 
 func main() {
 	bot.SetPluginsShortCircuitAffectMain(true)        // 设置插件的短路是否影响main中注册的指令和消息处理器

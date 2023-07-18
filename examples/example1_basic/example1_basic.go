@@ -13,7 +13,7 @@ import (
 // NewBot参数: id, secret, 路径, 端口
 // 下方例子会监听 localhost:8888/ 获取消息
 // 并验证事件的机器人ID是否符合
-var bot = bot_base.NewBot("bot_id", "bot_secret", "/", ":8888")
+var bot = bot_base.NewBot("bot_id", "bot_secret", "bot_pubkey", "/", ":8888")
 
 func msg_preprocessor(data bot_events.EventSendMessage) { // 借助preprocessor为所有消息记录log
 	bot.Logger.Info("收到来自 " + data.Data.Nickname + " 的消息：" + data.GetContent(true))
