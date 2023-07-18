@@ -17,6 +17,8 @@
 -   内置消息过滤器，自动过滤重复消息
 -   底层使用gin构建，允许加入自定义路由（内部机制处理同端口同路径等复杂情况），方便集成页面应用供机器人使用（并校验用户）
 
+> go version >= 1.18（要求来自gin：https://github.com/gin-gonic/gin/pull/3511）
+
 **实例**
 
 > 请参阅[examples](./examples)
