@@ -22,9 +22,9 @@ func (api *ApiBase) RecallMessage(villa_id uint64, msg_uid string, room_id uint6
 	return resp_data, http_status, err
 }
 
-// func (api *ApiBase) uploadImageForMessage(_msg *models.MsgInputModel) (int, error) {
+// func (api *ApiBase) uploadImageForMessage(villa_id uint64, _msg *models.MsgInputModel) (int, error) {
 // 	url := (*_msg)["msg_content"].(models.MsgInputModel)["content"].(models.MsgInputModel)["image_uri"].(string)
-// 	resp_data, http_status, err := api.UploadImage(url)
+// 	resp_data, http_status, err := api.UploadImage(villa_id, url)
 // 	if err != nil {
 // 		return http_status, err
 // 	}
@@ -38,7 +38,7 @@ func (api *ApiBase) RecallMessage(villa_id uint64, msg_uid string, room_id uint6
 // 使用models.NewMsg创建消息，然后使用models.SetText等方法加入内容，最后使用此函数发送
 func (api *ApiBase) SendMessageCustomize(villa_id uint64, room_id uint64, _msg models.MsgInputModel) (models.SendMessageModel, int, error) {
 	// if models.MsgContentType(_msg["object_name"].(models.MsgContentType)) == models.MsgTypeImage {
-	// 	http_status, err := api.uploadImageForMessage(&_msg)
+	// 	http_status, err := api.uploadImageForMessage(villa_id, &_msg)
 	// 	if err != nil || http_status != 200 {
 	// 		return models.SendMessageModel{}, http_status, err
 	// 	}
