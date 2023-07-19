@@ -209,6 +209,7 @@ func (e *EventSendMessage) GetContent(is_treat bool) string {
 		content = strings.Replace(content, at, "", -1)
 		content = strings.TrimSpace(content)
 		content = strings.TrimLeft(content, "/")
+		content = strings.TrimSpace(content)
 	}
 	return content
 }
