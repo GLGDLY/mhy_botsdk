@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"unicode/utf16"
 
 	utils "github.com/GLGDLY/mhy_botsdk/utils"
 )
@@ -76,9 +77,9 @@ func (msg MsgInputModel) appendText(text_len int, args ...interface{}) { // inte
 		switch arg.(type) {
 		case string:
 			msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["text"].(*bytes.Buffer).WriteString(arg.(string))
-			text_len += len([]rune(arg.(string)))
+			text_len += len(utf16.Encode([]rune(arg.(string))))
 		case MsgEntityMentionRobot:
-			this_len := len([]rune(arg.(MsgEntityMentionRobot).Text))
+			this_len := len(utf16.Encode([]rune(arg.(MsgEntityMentionRobot).Text)))
 			msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["entities"] = append(msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["entities"].([]MsgInputModel),
 				MsgInputModel{"entity": MsgInputModel{"type": MsgEntityMentionRobotType, "bot_id": arg.(MsgEntityMentionRobot).BotID},
 					"offset": text_len, "length": this_len})
@@ -87,7 +88,7 @@ func (msg MsgInputModel) appendText(text_len int, args ...interface{}) { // inte
 				arg.(MsgEntityMentionRobot).BotID)
 			text_len += this_len
 		case MsgEntityMentionUser:
-			this_len := len([]rune(arg.(MsgEntityMentionUser).Text))
+			this_len := len(utf16.Encode([]rune(arg.(MsgEntityMentionUser).Text)))
 			msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["entities"] = append(msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["entities"].([]MsgInputModel),
 				MsgInputModel{"entity": MsgInputModel{"type": MsgEntityMentionUserType, "user_id": utils.String(arg.(MsgEntityMentionUser).UserID)},
 					"offset": text_len, "length": this_len})
@@ -96,14 +97,14 @@ func (msg MsgInputModel) appendText(text_len int, args ...interface{}) { // inte
 				utils.String(arg.(MsgEntityMentionUser).UserID))
 			text_len += this_len
 		case MsgEntityMentionAll:
-			this_len := len([]rune(arg.(MsgEntityMentionAll).Text))
+			this_len := len(utf16.Encode([]rune(arg.(MsgEntityMentionAll).Text)))
 			msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["entities"] = append(msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["entities"].([]MsgInputModel),
 				MsgInputModel{"entity": MsgInputModel{"type": MsgEntityMentionAllType}, "offset": text_len, "length": this_len})
 			msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["text"].(*bytes.Buffer).WriteString(arg.(MsgEntityMentionAll).Text)
 			msg["msg_content"].(MsgInputModel)["mentionedInfo"].(MsgInputModel)["type"] = MentionAll
 			text_len += this_len
 		case MsgEntityVillaRoomLink:
-			this_len := len([]rune(arg.(MsgEntityVillaRoomLink).Text))
+			this_len := len(utf16.Encode([]rune(arg.(MsgEntityVillaRoomLink).Text)))
 			msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["entities"] = append(msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["entities"].([]MsgInputModel),
 				MsgInputModel{"entity": MsgInputModel{"type": MsgEntityVillaRoomLinkType, "villa_id": utils.String(arg.(MsgEntityVillaRoomLink).VillaID),
 					"room_id": utils.String(arg.(MsgEntityVillaRoomLink).RoomID)},
@@ -115,7 +116,7 @@ func (msg MsgInputModel) appendText(text_len int, args ...interface{}) { // inte
 			if text == "" {
 				text = arg.(MsgEntityLink).URL
 			}
-			this_len := len([]rune(text))
+			this_len := len(utf16.Encode([]rune(text)))
 			msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["entities"] = append(msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["entities"].([]MsgInputModel),
 				MsgInputModel{"entity": MsgInputModel{"type": MsgEntityLinkType, "url": arg.(MsgEntityLink).URL,
 					"requires_bot_access_token": arg.(MsgEntityLink).RequiresBotAccessToken},
@@ -125,7 +126,7 @@ func (msg MsgInputModel) appendText(text_len int, args ...interface{}) { // inte
 		default:
 			content_string := utils.String(arg)
 			msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["text"].(*bytes.Buffer).WriteString(content_string)
-			text_len += len([]rune(content_string))
+			text_len += len(utf16.Encode([]rune(content_string)))
 		}
 	}
 }
@@ -139,7 +140,7 @@ func (msg MsgInputModel) AppendText(args ...interface{}) error {
 	if !ok {
 		s = msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["text"].(*bytes.Buffer).String()
 	}
-	text_len = len([]rune(s))
+	text_len = len(utf16.Encode([]rune(s)))
 	msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["text"] = bytes.NewBufferString(s)
 	msg.appendText(text_len, args...)
 	return nil
@@ -202,7 +203,8 @@ func (msg MsgInputModel) deepCopy() MsgInputModel {
 func (msg MsgInputModel) Finialize(room_id uint64) MsgInputModel {
 	_msg := msg.deepCopy()
 
-	if MsgContentType(_msg["object_name"].(MsgContentType)) == MsgTypeText {
+	content_type, ok := _msg["object_name"].(MsgContentType)
+	if ok && content_type == MsgTypeText {
 		_, ok := _msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["text"].(string)
 		if !ok {
 			_msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["text"] =
