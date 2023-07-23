@@ -18,7 +18,7 @@ func Try(function func(), handler func(interface{}, string)) {
 }
 
 func String(v interface{}) string {
-	return fmt.Sprintf("%v", v)
+	return fmt.Sprint(v)
 }
 
 func GetFunctionName(i interface{}) string {
