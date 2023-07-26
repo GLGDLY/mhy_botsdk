@@ -62,14 +62,19 @@ type MsgEntityLink struct {
 type MsgInputModel map[string]interface{}
 
 func NewMsg(msg_type MsgContentType) (MsgInputModel, error) {
+	msg := MsgInputModel{"object_name": msg_type, "msg_content": MsgInputModel{}}
 	switch msg_type {
-	case MsgTypeText, MsgTypeImage, MsgTypePost:
-		msg := MsgInputModel{"object_name": msg_type, "msg_content": MsgInputModel{}}
+	case MsgTypeText:
 		msg["msg_content"].(MsgInputModel)["content"] = MsgInputModel{"text": bytes.NewBufferString(""), "entities": []MsgInputModel{}}
 		msg["msg_content"].(MsgInputModel)["mentionedInfo"] = MsgInputModel{"type": MentionUser, "userIdList": []string{}}
-		return msg, nil
+	case MsgTypeImage:
+		msg["msg_content"].(MsgInputModel)["content"] = MsgInputModel{"url": "", "size": MsgInputModel{"width": 0, "height": 0}, "file_size": 0}
+	case MsgTypePost:
+		msg["msg_content"] = MsgInputModel{"content": MsgInputModel{"post_id": ""}}
+	default:
+		return nil, errors.New("不支持的消息类型")
 	}
-	return nil, errors.New("不支持的消息类型")
+	return msg, nil
 }
 
 func (msg MsgInputModel) appendText(text_len int, args ...interface{}) { // internal processor
@@ -132,9 +137,9 @@ func (msg MsgInputModel) appendText(text_len int, args ...interface{}) { // inte
 }
 
 func (msg MsgInputModel) AppendText(args ...interface{}) error {
-	if MsgContentType(msg["object_name"].(MsgContentType)) != MsgTypeText {
-		return errors.New("消息类型不是文本消息，请使用NewMsg(MsgText)创建文本消息后SetText")
-	}
+	// if MsgContentType(msg["object_name"].(MsgContentType)) != MsgTypeText {
+	// 	return errors.New("消息类型不是文本消息，请使用NewMsg(MsgText)创建文本消息后SetText")
+	// }
 	s, ok := msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["text"].(string)
 	var text_len int
 	if !ok {
@@ -148,10 +153,11 @@ func (msg MsgInputModel) AppendText(args ...interface{}) error {
 
 // 设置文本消息内容
 func (msg MsgInputModel) SetText(args ...interface{}) error {
-	if MsgContentType(msg["object_name"].(MsgContentType)) != MsgTypeText {
-		return errors.New("消息类型不是文本消息，请使用NewMsg(MsgText)创建文本消息后SetText")
-	}
-	msg["msg_content"].(MsgInputModel)["content"] = MsgInputModel{"text": bytes.NewBufferString(""), "entities": []MsgInputModel{}}
+	// if MsgContentType(msg["object_name"].(MsgContentType)) != MsgTypeText {
+	// 	return errors.New("消息类型不是文本消息，请使用NewMsg(MsgText)创建文本消息后SetText")
+	// }
+	msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["text"] = bytes.NewBufferString("")
+	msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["entities"] = []MsgInputModel{}
 	msg["msg_content"].(MsgInputModel)["mentionedInfo"] = MsgInputModel{"type": MentionUser, "userIdList": []string{}}
 	text_len := 0
 	msg.appendText(text_len, args...)
@@ -159,29 +165,31 @@ func (msg MsgInputModel) SetText(args ...interface{}) error {
 }
 
 // 设置引用回复消息，接受被引用消息的id和发送时间
-func (msg MsgInputModel) SetTextQuote(quoted_message_id string, quoted_message_send_time int64, original_message_id string, original_message_send_time int64) error {
+func (msg MsgInputModel) SetTextQuote(quoted_message_id string, quoted_message_send_time uint64) error {
 	// if MsgContentType(msg["object_name"].(string)) != MsgText {
 	// 	return errors.New("消息类型不是文本消息，请使用NewMsg(MsgText)创建文本消息后SetText")
 	// }
-	msg["msg_content"].(MsgInputModel)["quote"] = MsgInputModel{"originalMessageId": original_message_id, "originalMessageSendTime": original_message_send_time,
-		"quotedMessageId": quoted_message_id, "quotedMessageSendTime": quoted_message_send_time}
+	msg["msg_content"].(MsgInputModel)["quote"] = MsgInputModel{"original_message_id": quoted_message_id, "original_message_send_time": quoted_message_send_time,
+		"quoted_message_id": quoted_message_id, "quoted_message_send_time": quoted_message_send_time}
 	return nil
 }
 
 // 设置图片消息内容，接受图片url, 图片宽度, 图片高度, 图片大小 4种类型的参数，宽高单位为像素，图片大小单位为字节，不应超过10M
 func (msg MsgInputModel) SetImage(url string, width int, height int, file_size int) error {
-	if MsgContentType(msg["object_name"].(MsgContentType)) != MsgTypeImage {
-		return errors.New("消息类型不是图片消息，请使用NewMsg(MsgTypeImage)创建图片消息后SetImage")
-	}
-	msg["msg_content"] = MsgInputModel{"content": MsgInputModel{"image_uri": url, "width": width, "height": height}}
+	// if MsgContentType(msg["object_name"].(MsgContentType)) != MsgTypeImage {
+	// 	return errors.New("消息类型不是图片消息，请使用NewMsg(MsgTypeImage)创建图片消息后SetImage")
+	// }
+	msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["url"] = url
+	msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["size"] = MsgInputModel{"width": width, "height": height}
+	msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["file_size"] = file_size
 	return nil
 }
 
 func (msg MsgInputModel) SetPost(post_id string) error {
-	if MsgContentType(msg["object_name"].(MsgContentType)) != MsgTypePost {
-		return errors.New("消息类型不是动态消息，请使用NewMsg(MsgTypePost)创建动态消息后SetPost")
-	}
-	msg["msg_content"] = MsgInputModel{"content": MsgInputModel{"post_id": post_id}}
+	// if MsgContentType(msg["object_name"].(MsgContentType)) != MsgTypePost {
+	// 	return errors.New("消息类型不是动态消息，请使用NewMsg(MsgTypePost)创建动态消息后SetPost")
+	// }
+	msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["post_id"] = post_id
 	return nil
 }
 
