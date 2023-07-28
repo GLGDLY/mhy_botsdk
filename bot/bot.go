@@ -201,6 +201,8 @@ switch_label:
 			break switch_label
 		}
 		// 3. run plugins
+
+		// 3_1. run plugins preprocessors
 		for _, p := range _bot.plugins {
 			if p.IsEnable {
 				for _, _preprocessor := range p.Preprocessors {
@@ -208,6 +210,12 @@ switch_label:
 						_bot.Logger.Error("preprocessor {", utils.GetFunctionName(_preprocessor), "} error: ", err, "\n", tb)
 					})
 				}
+			}
+		}
+
+		// 3_2. run plugins commands
+		for _, p := range _bot.plugins {
+			if p.IsEnable {
 				_is_short_circuit := false
 				for _, _command := range p.OnCommand {
 					if _command.CheckCommand(event, _bot.abstract_bot) {
@@ -220,6 +228,7 @@ switch_label:
 				}
 			}
 		}
+
 		// 4. run on commands
 		for _, _command := range _bot.on_commands {
 			if _command.CheckCommand(event, _bot.Logger, _bot.Api) {
