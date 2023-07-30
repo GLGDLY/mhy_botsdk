@@ -1,0 +1,64 @@
+env:
+  - CGO_ENABLED=0
+  - GO111MODULE=on
+
+before:
+  hooks:
+    - cd tools
+    - go mod tidy
+
+builds:
+  - main: ./tools/getAllVilla
+    - id: "getAllVilla_linux"
+      goos:
+        - linux
+      goarch:
+        - 386
+        - amd64
+        - arm
+        - arm64
+      goarm:
+        - 6
+        - 7
+      mod_timestamp: "{{ .CommitTimestamp }}"
+      flags:
+        - -trimpath
+      ldflags:
+        - -s -w
+    - id: "getAllVilla_win"
+      goos:
+        - windows
+      goarch:
+        - 386
+        - amd64
+      mod_timestamp: "{{ .CommitTimestamp }}"
+      flags:
+        - -trimpath
+      ldflags:
+        - -s -w
+    - id: "getAllVilla_mac"
+      goos:
+        - darwin
+      goarch:
+        - amd64
+      mod_timestamp: "{{ .CommitTimestamp }}"
+      flags:
+        - -trimpath
+      ldflags:
+        - -s -w
+
+  # - main: ./cmd/worker
+  #   id: "worker"
+  #   binary: worker
+  #   goos:
+  #     - linux
+  #     - darwin
+  #     - windows
+
+  # - main: ./cmd/tracker
+  #   id: "tracker"
+  #   binary: tracker
+  #   goos:
+  #     - linux
+  #     - darwin
+  #     - windows
