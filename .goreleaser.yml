@@ -39,6 +39,7 @@ builds:
   goos:
     - darwin
   goarch:
+    - 386
     - amd64
   mod_timestamp: "{{ .CommitTimestamp }}"
   flags:
@@ -46,18 +47,13 @@ builds:
   ldflags:
     - -s -w
 
-  # - main: ./cmd/worker
-  #   id: "worker"
-  #   binary: worker
-  #   goos:
-  #     - linux
-  #     - darwin
-  #     - windows
-
-  # - main: ./cmd/tracker
-  #   id: "tracker"
-  #   binary: tracker
-  #   goos:
-  #     - linux
-  #     - darwin
-  #     - windows
+archives:
+- id: "getAllVilla"
+  builds:
+      - "getAllVilla_linux"
+      - "getAllVilla_win"
+      - "getAllVilla_mac"
+  name_template: "getAllVilla_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+  format_overrides:
+      - goos: windows
+        format: zip
