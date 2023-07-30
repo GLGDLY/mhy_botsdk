@@ -2,12 +2,7 @@ project_name: tools
 
 env:
   - CGO_ENABLED=0
-  - GO111MODULE=on
-
-before:
-  hooks:
-    - cd tools
-    - go mod tidy
+  - GO111MODULE=ons
 
 builds:
 - id: "getAllVilla_linux"

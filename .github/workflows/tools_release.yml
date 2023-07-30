@@ -19,6 +19,13 @@ jobs:
         with:
           go-version: '1.20'
 
+      - name: Go mod tidy
+        uses: evantorrie/mott-the-tidier@v1-beta
+        with:
+          gomods: |
+            **/go.mod
+            -tools/getAllVilla/go.mod
+
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@master
         with:
