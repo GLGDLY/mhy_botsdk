@@ -6,7 +6,7 @@ env:
 
 builds:
 - id: "getAllVilla_linux"
-  main: ./tree/main/tools/getAllVilla
+  main: ./tools/getAllVilla/main.go
   goos:
     - linux
   goarch:
@@ -23,7 +23,7 @@ builds:
   ldflags:
     - -s -w
 - id: "getAllVilla_win"
-  main: ./tree/main/tools/getAllVilla
+  main: ./tools/getAllVilla/main.go
   goos:
     - windows
   goarch:
@@ -35,7 +35,7 @@ builds:
   ldflags:
     - -s -w
 - id: "getAllVilla_mac"
-  main: ./tree/main/tools/getAllVilla
+  main: ./tools/getAllVilla/main.go
   goos:
     - darwin
   goarch:
