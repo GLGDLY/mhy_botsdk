@@ -1,0 +1,4 @@
+bot_id: bot_xxx
+bot_secret: xxx
+public_key: -----BEGIN PUBLIC KEY----- xxx -----END PUBLIC KEY-----
+range: 3000

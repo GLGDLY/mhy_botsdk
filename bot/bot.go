@@ -366,7 +366,7 @@ func NewBot(bot_id, bot_secret, bot_pubkey, path, addr string) *bot {
 		on_commands:                          []commands.OnCommand{},
 		preprocessors:                        []commands.Preprocessor{},
 		wait_for_command_registers:           []waitForCommandRegister{},
-		Api:                                  &apis.ApiBase{Base: bot_base},
+		Api:                                  apis.MakeAPIBase(bot_base, 1*time.Minute),
 		Logger:                               logger.NewDefaultLogger(bot_id),
 	}
 	_bot.abstract_bot = &plugin.AbstractBot{
@@ -420,6 +420,11 @@ func NewBot(bot_id, bot_secret, bot_pubkey, path, addr string) *bot {
 	}
 
 	return &_bot
+}
+
+// 设置API的超时时间，默认为1分钟
+func (_bot *bot) SetAPITimeout(timeout time.Duration) {
+	_bot.Api.SetTimeout(timeout)
 }
 
 // 设置bot的日志记录器，默认为os.Stdout+一个log档案

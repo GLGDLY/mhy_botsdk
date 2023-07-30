@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
+	"time"
 
 	base "github.com/GLGDLY/mhy_botsdk"
 	models "github.com/GLGDLY/mhy_botsdk/models"
@@ -20,6 +21,19 @@ const open_api_url string = "https://bbs-api.miyoushe.com"
 type ApiBase struct {
 	Base    models.BotBase
 	session http.Client
+}
+
+func MakeAPIBase(base models.BotBase, timeout time.Duration) *ApiBase {
+	return &ApiBase{
+		Base: base,
+		session: http.Client{
+			Timeout: timeout,
+		},
+	}
+}
+
+func (api *ApiBase) SetTimeout(timeout time.Duration) {
+	api.session.Timeout = timeout
 }
 
 func (api *ApiBase) makeURL(path string) string {

@@ -28,6 +28,12 @@
 -   [example3](./examples/example3_plugins)：简单的插件结构
 -   [example4](./examples/example4_wait_for/example4_wait_for.go)：机器人暂停当前消息处理链，等待用户输入（以简单的猜数字机器人为例子）
 
+**实用工具**
+
+> 请参阅[tools](./tools)
+
+-   [getAllVilla](./tools/getAllVilla/main.go)：获取机器人所在的全部别野
+
 _由于官方文档与实际存在不少差异，目前并不能确保所有消息事件和 API 完全正确_
 
 **Import**
