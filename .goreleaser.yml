@@ -1,3 +1,5 @@
+project_name: tools
+
 env:
   - CGO_ENABLED=0
   - GO111MODULE=on
@@ -8,44 +10,46 @@ before:
     - go mod tidy
 
 builds:
-  - main: ./tools/getAllVilla
-    - id: "getAllVilla_linux"
-      goos:
-        - linux
-      goarch:
-        - 386
-        - amd64
-        - arm
-        - arm64
-      goarm:
-        - 6
-        - 7
-      mod_timestamp: "{{ .CommitTimestamp }}"
-      flags:
-        - -trimpath
-      ldflags:
-        - -s -w
-    - id: "getAllVilla_win"
-      goos:
-        - windows
-      goarch:
-        - 386
-        - amd64
-      mod_timestamp: "{{ .CommitTimestamp }}"
-      flags:
-        - -trimpath
-      ldflags:
-        - -s -w
-    - id: "getAllVilla_mac"
-      goos:
-        - darwin
-      goarch:
-        - amd64
-      mod_timestamp: "{{ .CommitTimestamp }}"
-      flags:
-        - -trimpath
-      ldflags:
-        - -s -w
+- id: "getAllVilla_linux"
+  main: ./tools/getAllVilla
+  goos:
+    - linux
+  goarch:
+    - 386
+    - amd64
+    - arm
+    - arm64
+  goarm:
+    - 6
+    - 7
+  mod_timestamp: "{{ .CommitTimestamp }}"
+  flags:
+    - -trimpath
+  ldflags:
+    - -s -w
+- id: "getAllVilla_win"
+  main: ./tools/getAllVilla
+  goos:
+    - windows
+  goarch:
+    - 386
+    - amd64
+  mod_timestamp: "{{ .CommitTimestamp }}"
+  flags:
+    - -trimpath
+  ldflags:
+    - -s -w
+- id: "getAllVilla_mac"
+  main: ./tools/getAllVilla
+  goos:
+    - darwin
+  goarch:
+    - amd64
+  mod_timestamp: "{{ .CommitTimestamp }}"
+  flags:
+    - -trimpath
+  ldflags:
+    - -s -w
 
   # - main: ./cmd/worker
   #   id: "worker"
