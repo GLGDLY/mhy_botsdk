@@ -2,7 +2,7 @@ project_name: tools
 
 env:
   - CGO_ENABLED=0
-  - GO111MODULE=ons
+  - GO111MODULE=on
 
 builds:
 - id: "getAllVilla_linux"
