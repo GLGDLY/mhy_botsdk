@@ -39,4 +39,6 @@ archives:
       format: zip
   wrap_in_directory: true
   files:
-    - ./tools/getAllVilla/config.yaml
+    - src: "./tools/getAllVilla/config.yaml"
+      dst: "."
+      strip_parent: true
