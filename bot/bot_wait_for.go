@@ -24,7 +24,7 @@ type waitForCommandRegister struct {
 	cancel   chan bool
 }
 
-func (_bot *bot) validateWaitForCommandScope(reg waitForCommandRegister, data events.EventSendMessage) bool {
+func (_bot *Bot) validateWaitForCommandScope(reg waitForCommandRegister, data events.EventSendMessage) bool {
 	if reg.register.Scope&models.ScopeGlobal != 0 { // always true if global scope is enabled
 		return true
 	}
@@ -47,7 +47,7 @@ func (_bot *bot) validateWaitForCommandScope(reg waitForCommandRegister, data ev
 }
 
 // return true if the short circuit is needed
-func (_bot *bot) checkWaifForCommand(data events.EventSendMessage) bool {
+func (_bot *Bot) checkWaifForCommand(data events.EventSendMessage) bool {
 	msg := data.GetContent(false)
 	at := "@" + data.Robot.Template.Name
 	for _, reg := range _bot.wait_for_command_registers {
@@ -83,7 +83,7 @@ func (_bot *bot) checkWaifForCommand(data events.EventSendMessage) bool {
 
 // 等待特定指令的触发，并回传触发该指令的消息事件（或超时错误）；
 // 用于暂停处理当前消息链，等待特定指令的触发或超时再回复
-func (_bot *bot) WaitForCommand(reg models.WaitForCommandRegister) (*events.EventSendMessage, error) {
+func (_bot *Bot) WaitForCommand(reg models.WaitForCommandRegister) (*events.EventSendMessage, error) {
 	// manage default values for optional args
 	if reg.Timeout == nil {
 		var timeout time.Duration = 1 * time.Minute
@@ -185,7 +185,7 @@ func (_bot *bot) WaitForCommand(reg models.WaitForCommandRegister) (*events.Even
 }
 
 // 取消等待特定指令的注册
-func (_bot *bot) CancelWaitForCommand(identify string) error {
+func (_bot *Bot) CancelWaitForCommand(identify string) error {
 	for i, v := range _bot.wait_for_command_registers {
 		if v.register.Identify != nil && *v.register.Identify == identify {
 			_bot.wait_for_command_registers[i].cancel <- true

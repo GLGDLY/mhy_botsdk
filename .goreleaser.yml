@@ -5,10 +5,12 @@ env:
   - GO111MODULE=on
 
 builds:
-- id: "getAllVilla_linux"
+- id: "getAllVilla"
   main: ./tools/getAllVilla/main.go
   binary: getAllVilla
   goos:
+    - darwin
+    - windows
     - linux
   goarch:
     - 386
@@ -18,31 +20,9 @@ builds:
   goarm:
     - 6
     - 7
-  mod_timestamp: "{{ .CommitTimestamp }}"
-  flags:
-    - -trimpath
-  ldflags:
-    - -s -w
-- id: "getAllVilla_win"
-  main: ./tools/getAllVilla/main.go
-  binary: getAllVilla.exe
-  goos:
-    - windows
-  goarch:
-    - 386
-    - amd64
-  mod_timestamp: "{{ .CommitTimestamp }}"
-  flags:
-    - -trimpath
-  ldflags:
-    - -s -w
-- id: "getAllVilla_mac"
-  main: ./tools/getAllVilla/main.go
-  binary: getAllVilla
-  goos:
-    - darwin
-  goarch:
-    - amd64
+  ignore:
+    - goos: darwin
+      goarch: 386
   mod_timestamp: "{{ .CommitTimestamp }}"
   flags:
     - -trimpath
@@ -52,10 +32,15 @@ builds:
 archives:
 - id: "getAllVilla"
   builds:
-      - "getAllVilla_linux"
-      - "getAllVilla_win"
-      - "getAllVilla_mac"
-  name_template: "getAllVilla_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    - "getAllVilla"
+  replacements:
+    darwin: macos
+    386: i386
+    amd64: x86_64
+  name_template: "getAllVilla_v{{ .Tag }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
   format_overrides:
-      - goos: windows
-        format: zip
+    - goos: windows
+      format: zip
+  wrap_in_directory: true
+  files:
+    - ./tools/getAllVilla/config.yaml

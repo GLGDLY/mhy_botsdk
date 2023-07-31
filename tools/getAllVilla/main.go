@@ -13,6 +13,25 @@ import (
 	bot_base "github.com/GLGDLY/mhy_botsdk/bot"
 )
 
+func renderProgess(l_limit, u_limit, progress uint64) string {
+	percent := float64(progress-l_limit) / float64(u_limit-l_limit) * 100
+	numBlocks := int(percent / 20) // how many blocks over 5 blocks
+	if numBlocks > 5 {
+		numBlocks = 5
+	} else if numBlocks < 0 {
+		numBlocks = 0
+	}
+	ret := fmt.Sprintf("%.0f%% |", percent)
+	for i := 0; i < int(numBlocks); i++ {
+		ret += "█"
+	}
+	for i := 0; i < 5-int(numBlocks); i++ {
+		ret += " "
+	}
+	ret += fmt.Sprintf("| (%d/%d)", progress-l_limit, u_limit-l_limit)
+	return ret
+}
+
 type Config struct {
 	BotID     string `yaml:"bot_id"`
 	BotSecret string `yaml:"bot_secret"`
@@ -23,7 +42,7 @@ type Config struct {
 func (c *Config) LoadConfig() {
 	f, err := os.Open("config.yaml")
 	if err != nil {
-		panic(err)
+		panic(fmt.Sprintf("无法打开配置文件 config.yaml，请检查是否存在该文件: %v", err))
 	}
 	defer f.Close()
 	yaml.NewDecoder(f).Decode(c)
@@ -64,8 +83,6 @@ func main() {
 	}
 	if config.Range == 0 {
 		config.Range = 3000
-	} else {
-		config.Range = config.Range / 1000 * 1000
 	}
 	fmt.Println("正在获取从 0 到", config.Range, "的所有villa信息...")
 	var bot = bot_base.NewBot(config.BotID, config.BotSecret, config.PublicKey, "/", ":8888")
@@ -82,17 +99,19 @@ func main() {
 		go getAllVilla(bot.Api, limit[i]-config.Range/3, limit[i], &all_villa, &progress[i])
 	}
 
+	fmt.Println("||==================================||==================================||==================================||")
+
 	for progress[0]+progress[1]+progress[2] < config.Range*2 {
 		// \033[2K\r
 		out := [3]string{}
 		for i := 0; i < 3; i++ {
-			out[i] = fmt.Sprintf("[%d-%d]: %d", limit[i]-config.Range/3, limit[i], progress[i])
+			out[i] = fmt.Sprintf("[t_%d]: %s", i+1, renderProgess(limit[i]-config.Range/3, limit[i], progress[i]))
 		}
-		fmt.Printf("\r%-20s %-20s %-20s", out[0], out[1], out[2])
+		fmt.Printf("\r|| %-32s || %-32s || %-32s ||", out[0], out[1], out[2])
 		time.Sleep(10 * time.Millisecond)
 	}
 
-	fmt.Println("\n已加入频道数量：", len(all_villa), "，正在写入文件...")
+	fmt.Println("\n已加入别野数量：", len(all_villa), "，正在写入文件...")
 
 	f, _ := os.Create("all_villa.json")
 	defer f.Close()

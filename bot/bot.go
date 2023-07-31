@@ -23,7 +23,7 @@ import (
 	_ "github.com/fatih/color" // used init for support color output in console
 )
 
-type bot struct {
+type Bot struct {
 	Base           models.BotBase // 机器人基本信息
 	path_key       string
 	addr_key       string
@@ -58,12 +58,12 @@ type server_context struct {
 	svr_addr   string
 	is_running bool
 	wg         *sync.WaitGroup
-	bots       map[string][]*bot                    // path: bot
+	bots       map[string][]*Bot                    // path: bot
 	handles    map[string][]func(*gin.Context) bool // path: handler
 }
 
 type bot_context struct {
-	bot     *bot
+	bot     *Bot
 	svr_ctx *server_context
 }
 
@@ -94,7 +94,7 @@ func AddHttpRouteHandler(path, addr string, handler func(*gin.Context) bool) {
 			svr_addr:   addr,
 			is_running: false,
 			wg:         &sync.WaitGroup{},
-			bots:       make(map[string][]*bot),
+			bots:       make(map[string][]*Bot),
 			handles:    make(map[string][]func(*gin.Context) bool),
 		}
 	} else {
@@ -163,7 +163,7 @@ func StartAllHttpServer() {
 
 /* bot related */
 
-func processEvent(_bot *bot, event events.Event) {
+func processEvent(_bot *Bot, event events.Event) {
 	event_id := event.Event.Id
 	if _bot.filter_manager.needFilter(event_id) {
 		_bot.Logger.Debugf("filter repeat event: %v+\n", event)
@@ -274,7 +274,7 @@ switch_label:
 	}
 }
 
-func hook(_bots []*bot, c *gin.Context) {
+func hook(_bots []*Bot, c *gin.Context) {
 	// send raw request to listeners on bot of current path and port
 	for _, _bot := range _bots {
 		if !_bot.is_running {
@@ -345,10 +345,10 @@ func hook(_bots []*bot, c *gin.Context) {
 // 对于消息处理，可以通过 AddPreprocessor() 方法添加预处理器，通过 AddOnCommand() 方法添加命令处理器，通过 AddListener() 方法添加事件监听器；
 // 对于插件，可以通过 AddPlugin() 方法添加插件；
 // 整体消息处理的运行与短路顺序为： [main]预处理器 -> [插件]预处理器 -> [插件]令处理器 -> [main]命令处理器 -> [main]事件监听器；
-func NewBot(bot_id, bot_secret, bot_pubkey, path, addr string) *bot {
+func NewBot(bot_id, bot_secret, bot_pubkey, path, addr string) *Bot {
 	bot_pubkey = parsePubKey(bot_pubkey) // parse pubkey to appropriate format
 	bot_base := models.BotBase{ID: bot_id, Secret: bot_secret, PubKey: bot_pubkey, EncodedSecret: pubKeyEncryptSecret(bot_pubkey, bot_secret)}
-	_bot := bot{
+	_bot := Bot{
 		Base:                                 bot_base,
 		addr_key:                             addr,
 		path_key:                             path,
@@ -409,11 +409,11 @@ func NewBot(bot_id, bot_secret, bot_pubkey, path, addr string) *bot {
 		_bot.svr = port_exists_svr_ptr.svr
 		bot_context_manager[bot_id].svr_ctx = port_exists_svr_ptr
 	} else if port_already_exists {
-		port_exists_svr_ptr.bots[path] = []*bot{&_bot}
+		port_exists_svr_ptr.bots[path] = []*Bot{&_bot}
 		_bot.svr = port_exists_svr_ptr.svr
 		bot_context_manager[bot_id].svr_ctx = port_exists_svr_ptr
 	} else {
-		_bots := map[string][]*bot{path: {&_bot}}
+		_bots := map[string][]*Bot{path: {&_bot}}
 		svr := gin.Default()
 		_bot.svr = svr
 		bot_context_manager[bot_id].svr_ctx = &server_context{svr: svr, svr_addr: addr, is_running: false, wg: &sync.WaitGroup{}, bots: _bots, handles: map[string][]func(*gin.Context) bool{}}
@@ -423,34 +423,34 @@ func NewBot(bot_id, bot_secret, bot_pubkey, path, addr string) *bot {
 }
 
 // 设置API的超时时间，默认为1分钟
-func (_bot *bot) SetAPITimeout(timeout time.Duration) {
+func (_bot *Bot) SetAPITimeout(timeout time.Duration) {
 	_bot.Api.SetTimeout(timeout)
 }
 
 // 设置bot的日志记录器，默认为os.Stdout+一个log档案
-func (_bot *bot) SetLogger(logger logger.LoggerInterface) {
+func (_bot *Bot) SetLogger(logger logger.LoggerInterface) {
 	_bot.Logger = logger
 }
 
 // 设置是否使用默认的日志记录器，默认为false
-func (_bot *bot) SetUseDefaultLogger(is_use bool) {
+func (_bot *Bot) SetUseDefaultLogger(is_use bool) {
 	_bot.use_default_logger = is_use
 }
 
 // 设置插件中的指令短路是否会影响主程序其余指令和监听器的执行，默认为false
-func (_bot *bot) SetPluginsShortCircuitAffectMain(is_affect bool) {
+func (_bot *Bot) SetPluginsShortCircuitAffectMain(is_affect bool) {
 	_bot.is_plugins_short_circuit_affect_main = is_affect
 }
 
 // 设置是否启用某一插件
-func (_bot *bot) SetPluginEnabled(plugin_name string, is_enable bool) {
+func (_bot *Bot) SetPluginEnabled(plugin_name string, is_enable bool) {
 	if _bot.plugins == nil {
 		_bot.plugins = plugin.FetchPlugins() // load plugins from plugins context manager
 	}
 	_bot.plugins[plugin_name].IsEnable = is_enable
 }
 
-func (_bot *bot) GetPluginNames() []string {
+func (_bot *Bot) GetPluginNames() []string {
 	if _bot.plugins == nil {
 		_bot.plugins = plugin.FetchPlugins() // load plugins from plugins context manager
 	}
@@ -462,45 +462,45 @@ func (_bot *bot) GetPluginNames() []string {
 }
 
 // 设置是否过滤自己发送的消息，默认为true
-func (_bot *bot) SetFilterSelfMsg(is_filter bool) {
+func (_bot *Bot) SetFilterSelfMsg(is_filter bool) {
 	_bot.is_filter_self_msg = is_filter
 }
 
 // 设置是否验证消息签名，默认为true
-func (_bot *bot) SetVerifyMsgSignature(is_verify bool) {
+func (_bot *Bot) SetVerifyMsgSignature(is_verify bool) {
 	_bot.is_verify_msg_signature = is_verify
 }
 
-func (_bot *bot) AddListenerJoinVilla(listener events.BotListenerJoinVilla) {
+func (_bot *Bot) AddListenerJoinVilla(listener events.BotListenerJoinVilla) {
 	_bot.listeners_join_villa = append(_bot.listeners_join_villa, listener)
 }
 
-func (_bot *bot) AddListenerSendMessage(listener events.BotListenerSendMessage) {
+func (_bot *Bot) AddListenerSendMessage(listener events.BotListenerSendMessage) {
 	_bot.listeners_send_message = append(_bot.listeners_send_message, listener)
 }
 
-func (_bot *bot) AddListenerCreateRobot(listener events.BotListenerCreateRobot) {
+func (_bot *Bot) AddListenerCreateRobot(listener events.BotListenerCreateRobot) {
 	_bot.listeners_create_robot = append(_bot.listeners_create_robot, listener)
 }
 
-func (_bot *bot) AddListenerDeleteRobot(listener events.BotListenerDeleteRobot) {
+func (_bot *Bot) AddListenerDeleteRobot(listener events.BotListenerDeleteRobot) {
 	_bot.listeners_delete_robot = append(_bot.listeners_delete_robot, listener)
 }
 
-func (_bot *bot) AddListenerAddQuickEmoticon(listener events.BotListenerAddQuickEmoticon) {
+func (_bot *Bot) AddListenerAddQuickEmoticon(listener events.BotListenerAddQuickEmoticon) {
 	_bot.listeners_add_quick_emoticon = append(_bot.listeners_add_quick_emoticon, listener)
 }
 
-func (_bot *bot) AddListenerAuditCallback(listener events.BotListenerAuditCallback) {
+func (_bot *Bot) AddListenerAuditCallback(listener events.BotListenerAuditCallback) {
 	_bot.listeners_audit_callback = append(_bot.listeners_audit_callback, listener)
 }
 
 // 不对回调请求进行任何处理，直接返回到这里注册的监听器，允许用户自行处理回调请求（注意：将根据端口和路径发送回调请求，如使用同端口同路径多机器人，请自行分辨机器人）
-func (_bot *bot) AddlistenerRawRequest(listener events.BotListenerRawRequest) {
+func (_bot *Bot) AddlistenerRawRequest(listener events.BotListenerRawRequest) {
 	_bot.listeners_raw_request = append(_bot.listeners_raw_request, listener)
 }
 
-func (_bot *bot) RemoveListenerJoinVilla(listener events.BotListenerJoinVilla) {
+func (_bot *Bot) RemoveListenerJoinVilla(listener events.BotListenerJoinVilla) {
 	for i, l := range _bot.listeners_join_villa {
 		if reflect.ValueOf(l).Pointer() == reflect.ValueOf(listener).Pointer() {
 			_bot.listeners_join_villa = append(_bot.listeners_join_villa[:i], _bot.listeners_join_villa[i+1:]...)
@@ -509,7 +509,7 @@ func (_bot *bot) RemoveListenerJoinVilla(listener events.BotListenerJoinVilla) {
 	}
 }
 
-func (_bot *bot) RemoveListenerSendMessage(listener events.BotListenerSendMessage) {
+func (_bot *Bot) RemoveListenerSendMessage(listener events.BotListenerSendMessage) {
 	for i, l := range _bot.listeners_send_message {
 		if reflect.ValueOf(l).Pointer() == reflect.ValueOf(listener).Pointer() {
 			_bot.listeners_send_message = append(_bot.listeners_send_message[:i], _bot.listeners_send_message[i+1:]...)
@@ -518,7 +518,7 @@ func (_bot *bot) RemoveListenerSendMessage(listener events.BotListenerSendMessag
 	}
 }
 
-func (_bot *bot) RemoveListenerCreateRobot(listener events.BotListenerCreateRobot) {
+func (_bot *Bot) RemoveListenerCreateRobot(listener events.BotListenerCreateRobot) {
 	for i, l := range _bot.listeners_create_robot {
 		if reflect.ValueOf(l).Pointer() == reflect.ValueOf(listener).Pointer() {
 			_bot.listeners_create_robot = append(_bot.listeners_create_robot[:i], _bot.listeners_create_robot[i+1:]...)
@@ -527,7 +527,7 @@ func (_bot *bot) RemoveListenerCreateRobot(listener events.BotListenerCreateRobo
 	}
 }
 
-func (_bot *bot) RemoveListenerDeleteRobot(listener events.BotListenerDeleteRobot) {
+func (_bot *Bot) RemoveListenerDeleteRobot(listener events.BotListenerDeleteRobot) {
 	for i, l := range _bot.listeners_delete_robot {
 		if reflect.ValueOf(l).Pointer() == reflect.ValueOf(listener).Pointer() {
 			_bot.listeners_delete_robot = append(_bot.listeners_delete_robot[:i], _bot.listeners_delete_robot[i+1:]...)
@@ -536,7 +536,7 @@ func (_bot *bot) RemoveListenerDeleteRobot(listener events.BotListenerDeleteRobo
 	}
 }
 
-func (_bot *bot) RemoveListenerAddQuickEmoticon(listener events.BotListenerAddQuickEmoticon) {
+func (_bot *Bot) RemoveListenerAddQuickEmoticon(listener events.BotListenerAddQuickEmoticon) {
 	for i, l := range _bot.listeners_add_quick_emoticon {
 		if reflect.ValueOf(l).Pointer() == reflect.ValueOf(listener).Pointer() {
 			_bot.listeners_add_quick_emoticon = append(_bot.listeners_add_quick_emoticon[:i], _bot.listeners_add_quick_emoticon[i+1:]...)
@@ -545,7 +545,7 @@ func (_bot *bot) RemoveListenerAddQuickEmoticon(listener events.BotListenerAddQu
 	}
 }
 
-func (_bot *bot) RemoveListenerAuditCallback(listener events.BotListenerAuditCallback) {
+func (_bot *Bot) RemoveListenerAuditCallback(listener events.BotListenerAuditCallback) {
 	for i, l := range _bot.listeners_audit_callback {
 		if reflect.ValueOf(l).Pointer() == reflect.ValueOf(listener).Pointer() {
 			_bot.listeners_audit_callback = append(_bot.listeners_audit_callback[:i], _bot.listeners_audit_callback[i+1:]...)
@@ -554,7 +554,7 @@ func (_bot *bot) RemoveListenerAuditCallback(listener events.BotListenerAuditCal
 	}
 }
 
-func (_bot *bot) RemovelistenerRawRequest(listener events.BotListenerRawRequest) {
+func (_bot *Bot) RemovelistenerRawRequest(listener events.BotListenerRawRequest) {
 	for i, l := range _bot.listeners_raw_request {
 		if reflect.ValueOf(l).Pointer() == reflect.ValueOf(listener).Pointer() {
 			_bot.listeners_raw_request = append(_bot.listeners_raw_request[:i], _bot.listeners_raw_request[i+1:]...)
@@ -563,12 +563,12 @@ func (_bot *bot) RemovelistenerRawRequest(listener events.BotListenerRawRequest)
 	}
 }
 
-func (_bot *bot) AddOnCommand(plugin commands.OnCommand) error {
+func (_bot *Bot) AddOnCommand(plugin commands.OnCommand) error {
 	_bot.on_commands = append(_bot.on_commands, plugin)
 	return nil
 }
 
-func (_bot *bot) RemoveOnCommand(plugin commands.OnCommand) error {
+func (_bot *Bot) RemoveOnCommand(plugin commands.OnCommand) error {
 	for i, p := range _bot.on_commands {
 		if p.Equals(plugin) {
 			_bot.on_commands = append(_bot.on_commands[:i], _bot.on_commands[i+1:]...)
@@ -578,12 +578,12 @@ func (_bot *bot) RemoveOnCommand(plugin commands.OnCommand) error {
 	return errors.New("plugin not found")
 }
 
-func (_bot *bot) AddPreprocessor(preprocessor commands.Preprocessor) error {
+func (_bot *Bot) AddPreprocessor(preprocessor commands.Preprocessor) error {
 	_bot.preprocessors = append(_bot.preprocessors, preprocessor)
 	return nil
 }
 
-func (_bot *bot) RemovePreprocessor(preprocessor commands.Preprocessor) error {
+func (_bot *Bot) RemovePreprocessor(preprocessor commands.Preprocessor) error {
 	for i, p := range _bot.preprocessors {
 		if reflect.ValueOf(p).Pointer() == reflect.ValueOf(preprocessor).Pointer() {
 			_bot.preprocessors = append(_bot.preprocessors[:i], _bot.preprocessors[i+1:]...)
@@ -593,7 +593,7 @@ func (_bot *bot) RemovePreprocessor(preprocessor commands.Preprocessor) error {
 	return errors.New("preprocessor not found")
 }
 
-func (_bot *bot) processHandlesBeforeStart() {
+func (_bot *Bot) processHandlesBeforeStart() {
 	svr_ctx := bot_context_manager[_bot.Base.ID].svr_ctx
 	if svr_ctx == nil {
 		panic("server context not found")
@@ -646,7 +646,7 @@ func (_bot *bot) processHandlesBeforeStart() {
 	}
 }
 
-func (_bot *bot) Start() error {
+func (_bot *Bot) Start() error {
 	_bot.is_running = true
 	if _bot.plugins == nil {
 		_bot.plugins = plugin.FetchPlugins() // load plugins from plugins context manager
@@ -688,7 +688,7 @@ func StartAllBot() {
 	var wg sync.WaitGroup
 	for _, bot_ctx := range bot_context_manager {
 		wg.Add(1)
-		go func(_bot *bot) {
+		go func(_bot *Bot) {
 			defer wg.Done()
 			_bot.Start()
 		}(bot_ctx.bot)
