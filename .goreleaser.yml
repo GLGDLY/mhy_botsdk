@@ -33,11 +33,7 @@ archives:
 - id: "getAllVilla"
   builds:
     - "getAllVilla"
-  replacements:
-    darwin: macos
-    386: i386
-    amd64: x86_64
-  name_template: "getAllVilla_v{{ .Tag }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+  name_template: "getAllVilla_v{{ .Tag }}_{{ - if eq .Os "darwin" }}macos{{ else }}{{ .Os }}{{ end }}_{{ - if eq .Arch "amd64" }}x86_64{{ else }}{{ .Arch }}{{ end }}{{ - if .Arm }}v{{ .Arm }}{{ end }}"
   format_overrides:
     - goos: windows
       format: zip
