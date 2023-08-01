@@ -55,7 +55,7 @@ func (api *ApiBase) SendMessageCustomize(villa_id uint64, room_id uint64, _msg m
 // 使用\< 和 \> 可转义 < 和 >，不会被解析为Entity
 func (api *ApiBase) SendMessage(villa_id uint64, room_id uint64, _msg_parts ...string) (models.SendMessageModel, int, error) {
 	msg, _ := models.NewMsg(models.MsgTypeText)
-	err := api.messageParser(&msg, villa_id, _msg_parts...)
+	err := api.MessageParser(&msg, villa_id, _msg_parts...)
 	if err != nil {
 		return models.SendMessageModel{}, 600, err
 	}

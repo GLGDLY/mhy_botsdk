@@ -9,7 +9,7 @@ import (
 	models "github.com/GLGDLY/mhy_botsdk/api_models"
 )
 
-func (api *ApiBase) messageParser(msg *models.MsgInputModel, villa_id uint64, _msg_parts ...string) error {
+func (api *ApiBase) MessageParser(msg *models.MsgInputModel, villa_id uint64, _msg_parts ...string) error {
 	/* for parsing */
 	msg_buf := bytes.NewBufferString("")
 	is_entity := false
