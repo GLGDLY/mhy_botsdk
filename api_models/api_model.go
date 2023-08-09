@@ -64,13 +64,13 @@ type GetVillaModel struct {
 /* Member */
 
 type MemberRoleModel struct {
-	ID        uint64   `json:"id,string"`
-	Name      string   `json:"name"`
-	VillaID   uint64   `json:"villa_id,string"`
-	Color     string   `json:"color"`
-	RoleType  string   `json:"role_type"`
-	IsAllRoom bool     `json:"is_all_room"`
-	RoomIDs   []uint64 `json:"room_ids,string"`
+	ID        uint64            `json:"id,string"`
+	Name      string            `json:"name"`
+	VillaID   uint64            `json:"villa_id,string"`
+	Color     string            `json:"color"`
+	RoleType  string            `json:"role_type"`
+	IsAllRoom bool              `json:"is_all_room"`
+	RoomIDs   Uint64StringSlice `json:"room_ids"`
 }
 
 type MemberModel struct {
@@ -138,8 +138,8 @@ type GetRoomModel struct {
 			GroupID               uint64 `json:"group_id,string"`
 			RoomDefaultNotifyType string `json:"room_default_notify_type"`
 			SendMsgAuthRange      struct {
-				IsAllSendMsg bool     `json:"is_all_send_msg"`
-				Roles        []uint64 `json:"roles,string"`
+				IsAllSendMsg bool              `json:"is_all_send_msg"`
+				Roles        Uint64StringSlice `json:"roles"`
 			} `json:"send_msg_auth_range"`
 		} `json:"room"`
 	} `json:"data"`
