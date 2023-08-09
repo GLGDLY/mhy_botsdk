@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"time"
 
-	bot_api_models "github.com/GLGDLY/mhy_botsdk/api_models"
 	bot_base "github.com/GLGDLY/mhy_botsdk/bot"
 	bot_commands "github.com/GLGDLY/mhy_botsdk/commands"
 	bot_events "github.com/GLGDLY/mhy_botsdk/events"
@@ -23,14 +22,8 @@ func msg_preprocessor(data bot_events.EventSendMessage) { // 借助preprocessor�
 func GuessingGame(data bot_events.EventSendMessage) {
 	bot.Logger.Info("GuessingGame")
 
-	AT := bot_api_models.MsgEntityMentionUser{ // 创建一个@用户的实体
-		Text:   "@" + data.Data.Nickname,
-		UserID: data.Data.FromUserId,
-	}
-
-	reply, _ := bot_api_models.NewMsg(bot_api_models.MsgTypeText)
-	reply.SetText(AT, "猜数字游戏开始，输入 1-100 之间的数字")
-	bot.Logger.Info(data.ReplyCustomize(reply))
+	reply := fmt.Sprintf("<@%v> 猜数字游戏开始，输入 1-100 之间的数字", data.Data.FromUserId)
+	bot.Logger.Info(data.Reply(reply))
 
 	var identify string = fmt.Sprintf("guessing_game_%v", data.Data.FromUserId) // 用于标识此次游戏的唯一标识符
 	bot.CancelWaitForCommand(identify)                                          // 取消之前的等待指令（如不存在会返回error）
@@ -59,17 +52,17 @@ func GuessingGame(data bot_events.EventSendMessage) {
 			Timeout:  &timeout,  // 超时时间，如果为0则不超时，nil默认60秒
 		})
 		if err != nil {
-			reply, _ := bot_api_models.NewMsg(bot_api_models.MsgTypeText)
+			reply := fmt.Sprintf("<@%v>", data.Data.FromUserId)
 			switch err.Error() {
 			case "timeout":
-				reply.SetText(AT, "超时了，游戏结束")
+				reply += "超时了，游戏结束"
 			case "cancel":
-				reply.SetText(AT, "游戏结束")
+				reply += "游戏结束"
 			default:
 				bot.Logger.Error(err)
-				reply.SetText(AT, "发生错误，游戏结束")
+				reply += "发生错误，游戏结束"
 			}
-			bot.Logger.Info(data.ReplyCustomize(reply))
+			bot.Logger.Info(data.Reply(reply))
 			return
 		}
 		num, conv_err := strconv.Atoi(regexp.MustCompile(num_reg).FindString(new_data.GetContent(true)))
@@ -78,37 +71,29 @@ func GuessingGame(data bot_events.EventSendMessage) {
 			continue
 		}
 		if target == num {
-			reply, _ := bot_api_models.NewMsg(bot_api_models.MsgTypeText)
-			reply.SetText(AT, "恭喜你猜对了！")
-			bot.Logger.Info(new_data.ReplyCustomize(reply))
+			reply := fmt.Sprintf("<@%v> 恭喜你猜对了！", data.Data.FromUserId)
+			bot.Logger.Info(data.Reply(reply))
 			return
 		} else if target > num {
 			if num > min {
 				min = num
 			}
-			reply, _ := bot_api_models.NewMsg(bot_api_models.MsgTypeText)
-			reply.SetText(AT, fmt.Sprintf("[%v]太小了，范围 %v-%v", num, min, max))
-			bot.Logger.Info(new_data.ReplyCustomize(reply))
+			reply := fmt.Sprintf("<@%v> [%v]太小了，范围 %v-%v", data.Data.FromUserId, num, min, max)
+			bot.Logger.Info(data.Reply(reply))
 		} else {
 			if num < max {
 				max = num
 			}
-			reply, _ := bot_api_models.NewMsg(bot_api_models.MsgTypeText)
-			reply.SetText(AT, fmt.Sprintf("[%v]太大了，范围 %v-%v", num, min, max))
-			bot.Logger.Info(new_data.ReplyCustomize(reply))
+			reply := fmt.Sprintf("<@%v> [%v]太大了，范围 %v-%v", data.Data.FromUserId, num, min, max)
+			bot.Logger.Info(data.Reply(reply))
 		}
 	}
 }
 
 func msg_handler(data bot_events.EventSendMessage) { // 最后触发监听器，一般用于确保任何消息都有回复
 	bot.Logger.Info("default msg handler")
-	reply, _ := bot_api_models.NewMsg(bot_api_models.MsgTypeText)
-	reply.SetText("你好，我是机器人，你可以输入 猜数字 来和我",
-		bot_api_models.MsgEntityMentionRobot{ // 艾特机器人
-			Text:  "@" + data.Robot.Template.Name,
-			BotID: data.Robot.Template.Id,
-		}, " 玩游戏呢")
-	bot.Logger.Info(data.ReplyCustomize(reply))
+	reply := fmt.Sprintf("你好，我是机器人，你可以输入 猜数字 来和我 <@%v> 玩游戏呢", data.Robot.Template.Id)
+	bot.Logger.Info(data.Reply(reply))
 }
 
 func main() {
