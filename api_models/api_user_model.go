@@ -78,59 +78,63 @@ func NewMsg(msg_type MsgContentType) (MsgInputModel, error) {
 }
 
 func (msg MsgInputModel) appendText(text_len int, args ...interface{}) { // internal processor
+	msg_content := msg["msg_content"].(MsgInputModel)
+	msg_content_inner := msg_content["content"].(MsgInputModel)
+	msg_context_text := msg_content_inner["text"].(*bytes.Buffer)
+	msg_content_mentionedInfo := msg_content["mentionedInfo"].(MsgInputModel)
 	for _, arg := range args {
-		switch arg.(type) {
+		switch typed_arg := arg.(type) {
 		case string:
-			msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["text"].(*bytes.Buffer).WriteString(arg.(string))
-			text_len += len(utf16.Encode([]rune(arg.(string))))
+			msg_context_text.WriteString(typed_arg)
+			text_len += len(utf16.Encode([]rune(typed_arg)))
 		case MsgEntityMentionRobot:
-			this_len := len(utf16.Encode([]rune(arg.(MsgEntityMentionRobot).Text)))
-			msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["entities"] = append(msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["entities"].([]MsgInputModel),
-				MsgInputModel{"entity": MsgInputModel{"type": MsgEntityMentionRobotType, "bot_id": arg.(MsgEntityMentionRobot).BotID},
+			this_len := len(utf16.Encode([]rune(typed_arg.Text)))
+			msg_content_inner["entities"] = append(msg_content_inner["entities"].([]MsgInputModel),
+				MsgInputModel{"entity": MsgInputModel{"type": MsgEntityMentionRobotType, "bot_id": typed_arg.BotID},
 					"offset": text_len, "length": this_len})
-			msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["text"].(*bytes.Buffer).WriteString(arg.(MsgEntityMentionRobot).Text)
-			msg["msg_content"].(MsgInputModel)["mentionedInfo"].(MsgInputModel)["userIdList"] = append(msg["msg_content"].(MsgInputModel)["mentionedInfo"].(MsgInputModel)["userIdList"].([]string),
-				arg.(MsgEntityMentionRobot).BotID)
+			msg_context_text.WriteString(typed_arg.Text)
+			msg_content_mentionedInfo["userIdList"] = append(msg_content_mentionedInfo["userIdList"].([]string),
+				typed_arg.BotID)
 			text_len += this_len
 		case MsgEntityMentionUser:
-			this_len := len(utf16.Encode([]rune(arg.(MsgEntityMentionUser).Text)))
-			msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["entities"] = append(msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["entities"].([]MsgInputModel),
-				MsgInputModel{"entity": MsgInputModel{"type": MsgEntityMentionUserType, "user_id": utils.String(arg.(MsgEntityMentionUser).UserID)},
+			this_len := len(utf16.Encode([]rune(typed_arg.Text)))
+			msg_content_inner["entities"] = append(msg_content_inner["entities"].([]MsgInputModel),
+				MsgInputModel{"entity": MsgInputModel{"type": MsgEntityMentionUserType, "user_id": utils.String(typed_arg.UserID)},
 					"offset": text_len, "length": this_len})
-			msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["text"].(*bytes.Buffer).WriteString(arg.(MsgEntityMentionUser).Text)
-			msg["msg_content"].(MsgInputModel)["mentionedInfo"].(MsgInputModel)["userIdList"] = append(msg["msg_content"].(MsgInputModel)["mentionedInfo"].(MsgInputModel)["userIdList"].([]string),
-				utils.String(arg.(MsgEntityMentionUser).UserID))
+			msg_context_text.WriteString(typed_arg.Text)
+			msg_content_mentionedInfo["userIdList"] = append(msg_content_mentionedInfo["userIdList"].([]string),
+				utils.String(typed_arg.UserID))
 			text_len += this_len
 		case MsgEntityMentionAll:
-			this_len := len(utf16.Encode([]rune(arg.(MsgEntityMentionAll).Text)))
-			msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["entities"] = append(msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["entities"].([]MsgInputModel),
+			this_len := len(utf16.Encode([]rune(typed_arg.Text)))
+			msg_content_inner["entities"] = append(msg_content_inner["entities"].([]MsgInputModel),
 				MsgInputModel{"entity": MsgInputModel{"type": MsgEntityMentionAllType}, "offset": text_len, "length": this_len})
-			msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["text"].(*bytes.Buffer).WriteString(arg.(MsgEntityMentionAll).Text)
-			msg["msg_content"].(MsgInputModel)["mentionedInfo"].(MsgInputModel)["type"] = MentionAll
+			msg_context_text.WriteString(typed_arg.Text)
+			msg_content_mentionedInfo["type"] = MentionAll
 			text_len += this_len
 		case MsgEntityVillaRoomLink:
-			this_len := len(utf16.Encode([]rune(arg.(MsgEntityVillaRoomLink).Text)))
-			msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["entities"] = append(msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["entities"].([]MsgInputModel),
-				MsgInputModel{"entity": MsgInputModel{"type": MsgEntityVillaRoomLinkType, "villa_id": utils.String(arg.(MsgEntityVillaRoomLink).VillaID),
-					"room_id": utils.String(arg.(MsgEntityVillaRoomLink).RoomID)},
+			this_len := len(utf16.Encode([]rune(typed_arg.Text)))
+			msg_content_inner["entities"] = append(msg_content_inner["entities"].([]MsgInputModel),
+				MsgInputModel{"entity": MsgInputModel{"type": MsgEntityVillaRoomLinkType, "villa_id": utils.String(typed_arg.VillaID),
+					"room_id": utils.String(typed_arg.RoomID)},
 					"offset": text_len, "length": this_len})
-			msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["text"].(*bytes.Buffer).WriteString(arg.(MsgEntityVillaRoomLink).Text)
+			msg_context_text.WriteString(typed_arg.Text)
 			text_len += this_len
 		case MsgEntityLink:
-			text := arg.(MsgEntityLink).Text
+			text := typed_arg.Text
 			if text == "" {
-				text = arg.(MsgEntityLink).URL
+				text = typed_arg.URL
 			}
 			this_len := len(utf16.Encode([]rune(text)))
-			msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["entities"] = append(msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["entities"].([]MsgInputModel),
-				MsgInputModel{"entity": MsgInputModel{"type": MsgEntityLinkType, "url": arg.(MsgEntityLink).URL,
-					"requires_bot_access_token": arg.(MsgEntityLink).RequiresBotAccessToken},
+			msg_content_inner["entities"] = append(msg_content_inner["entities"].([]MsgInputModel),
+				MsgInputModel{"entity": MsgInputModel{"type": MsgEntityLinkType, "url": typed_arg.URL,
+					"requires_bot_access_token": typed_arg.RequiresBotAccessToken},
 					"offset": text_len, "length": this_len})
-			msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["text"].(*bytes.Buffer).WriteString(text)
+			msg_context_text.WriteString(text)
 			text_len += this_len
 		default:
 			content_string := utils.String(arg)
-			msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["text"].(*bytes.Buffer).WriteString(content_string)
+			msg_context_text.WriteString(content_string)
 			text_len += len(utf16.Encode([]rune(content_string)))
 		}
 	}

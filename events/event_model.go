@@ -197,6 +197,7 @@ type Event struct {
 			} `json:"EventData"`
 		} `json:"extend_data"`
 	} `json:"event"`
+	Type string `json:"type,omitempty"` // for sdk reverse proxy packet handling
 }
 
 /* helper functions for EventSendMessage */
