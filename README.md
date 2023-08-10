@@ -26,7 +26,7 @@
 -   [example1](./examples/example1_basic/example1_basic.go)：简单的机器人，包含了消息处理器、指令处理器、事件监听器
 -   [example2](./examples/example2_multi_bot/example2_multi_bot.go)：多机器人同时允许
 -   [example3](./examples/example3_plugins)：简单的插件结构
--   [example4](./examples/example4_wait_for/example4_wait_for.go)：机器人暂停当前消息处理链，等待用户输入（以简单的猜数字机器人为例子）
+-   [example4](./examples/example4_wait_for/example4_wait_for.go)：机器人暂停当前消息处理链，等待用户输入（以简单的猜数字机器人为例子，修改bot id等机器人参数后可直接使用）
 
 **实用工具**
 
