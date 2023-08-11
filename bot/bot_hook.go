@@ -161,7 +161,6 @@ func dispatchEvent(raw_body []byte, sign *string) {
 		index := strings.LastIndex(raw_body_str, ",")
 		raw_body_str = raw_body_str[0:index] + "}"
 	}
-	fmt.Println("sign: ", *sign)
 
 	// handle reverse proxy, with format of: [body, sign]
 	for _, http_proxy := range _bot.reverse_proxy_http_msg_chan {
