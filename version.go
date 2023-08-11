@@ -1,8 +1,8 @@
 package mhy_botsdk
 
 const (
-	VERSION       = "v0.4.14"
+	VERSION       = "v0.5.0"
 	VERSION_MAJOR = 0
-	VERSION_MINOR = 4
-	VERSION_PATCH = 14
+	VERSION_MINOR = 5
+	VERSION_PATCH = 0
 )
