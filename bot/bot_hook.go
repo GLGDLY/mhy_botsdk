@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
+	"time"
 
 	events "github.com/GLGDLY/mhy_botsdk/events"
 	utils "github.com/GLGDLY/mhy_botsdk/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 )
 
 func processEvent(_bot *Bot, event events.Event) {
@@ -122,6 +125,65 @@ switch_label:
 	}
 }
 
+// decode and dispatch event from raw request
+func dispatchEvent(raw_body []byte, sign *string) {
+	raw_body_str := string(raw_body)
+
+	// decode event
+	var event events.Event
+	err := json.Unmarshal(raw_body, &event)
+	if err != nil {
+		fmt.Println("decode event error (" + err.Error() + "): " + raw_body_str)
+		return
+	}
+	if event.Type == "hb" { // handle heartbeat packet if using websocket protocol(based on reverse proxy)
+		return
+	}
+
+	// find bot ctx by id to allow multiple bot running on same port &|| path
+	_id := event.Event.Robot.Template.Id
+	_bot_ctx, ok := bot_context_manager[_id] // find bot ctx by id to allow multiple bot running on same port &|| path
+	if !ok {
+		// fmt.Println("bot id: ", _id, " not found in ctx: ", bot_context_manager)
+		return
+	}
+	_bot := _bot_ctx.bot
+
+	// check if bot is running
+	if !_bot.is_running {
+		return
+	}
+
+	// get sign for ws bot from event directly
+	if sign == nil {
+		sign = &event.Sign
+		// raw_body = raw_body[0 : len(raw_body)-len(*sign)
+		index := strings.LastIndex(raw_body_str, ",")
+		raw_body_str = raw_body_str[0:index] + "}"
+	}
+	fmt.Println("sign: ", *sign)
+
+	// handle reverse proxy, with format of: [body, sign]
+	for _, http_proxy := range _bot.reverse_proxy_http_msg_chan {
+		http_proxy <- [2][]byte{raw_body, []byte(*sign)}
+	}
+	for _, ws_proxy := range _bot.reverse_proxy_ws_msg_chan {
+		ws_proxy <- [2][]byte{raw_body, []byte(*sign)}
+	}
+
+	// detailed event processing
+	if _bot.is_verify_msg_signature {
+		verify, err := pubKeyVerify(*sign, raw_body_str, _bot.Base.Secret, _bot.Base.PubKey)
+		if (!verify) || (err != nil) {
+			_bot.Logger.Debug("new event verify error, rejected: ", err)
+			return
+		}
+	}
+	go processEvent(_bot, event) // use goroutine to avoid blocking (especially handle wait_for)
+}
+
+// hook for http bot
+
 func hook(_bots []*Bot, c *gin.Context) {
 	// send raw request to listeners on bot of current path and port
 	for _, _bot := range _bots {
@@ -151,55 +213,63 @@ func hook(_bots []*Bot, c *gin.Context) {
 		})
 	}()
 
-	// read body content
+	// read body content and sign
 	raw_body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		fmt.Println("new event read body error: ", err)
 		return
 	}
+	sign := c.Request.Header.Get("x-rpc-bot_sign")
 
-	// decode event
-	var event events.Event
-	err = json.Unmarshal(raw_body, &event)
-	if err != nil {
-		fmt.Println("decode event error (" + err.Error() + "): " + string(raw_body))
-		return
-	}
-	if event.Type == "hb" { // handle heartbeat packet if using websocket protocol(based on reverse proxy)
-		return
-	}
+	// dispatch event
+	dispatchEvent(raw_body, &sign)
+}
 
-	// find bot ctx by id to allow multiple bot running on same port &|| path
-	_id := event.Event.Robot.Template.Id
-	_bot_ctx, ok := bot_context_manager[_id] // find bot ctx by id to allow multiple bot running on same port &|| path
-	if !ok {
-		// fmt.Println("bot id: ", _id, " not found in ctx: ", bot_context_manager)
-		return
-	}
-	_bot := _bot_ctx.bot
+// hook for ws bot
 
-	// check if bot is running
-	if !_bot.is_running {
-		return
-	}
-
-	// handle reverse proxy
-	for _, http_proxy := range _bot.reverse_proxy_http_msg_chan {
-		http_proxy <- raw_body
-	}
-	for _, ws_proxy := range _bot.reverse_proxy_ws_msg_chan {
-		ws_proxy <- raw_body
-	}
-
-	// detailed event processing
-	if _bot.is_verify_msg_signature {
-		sign := c.Request.Header.Get("x-rpc-bot_sign")
-		verify, err := pubKeyVerify(sign, string(raw_body), _bot.Base.Secret, _bot.Base.PubKey)
-		if (!verify) || (err != nil) {
-			_bot.Logger.Debug("new event verify error, rejected: ", err)
+func wshook(conn *websocket.Conn) {
+	for {
+		mtype, raw_body, err := conn.ReadMessage()
+		if err != nil {
 			return
 		}
+		switch mtype {
+		case websocket.TextMessage:
+			dispatchEvent(raw_body, nil)
+			conn.WriteJSON(gin.H{
+				"message": "",
+				"retcode": 0,
+			})
+		case websocket.PingMessage:
+			conn.WriteMessage(websocket.PongMessage, nil)
+		default:
+			conn.WriteJSON(gin.H{
+				"message": "bad request",
+				"retcode": -1,
+			})
+		}
 	}
-	go processEvent(_bot, event) // use goroutine to avoid blocking (especially handle wait_for)
+}
 
+func (_bot *Bot) wsClientLoop(_url string) error {
+	do_once_flag := true
+	for {
+		func() {
+			conn, _, err := websocket.DefaultDialer.Dial(_url, nil)
+			if err != nil {
+				_bot.Logger.Errorf("ws服务端 %v 连接失败：%s", _url, err.Error())
+				time.Sleep(1 * time.Second)
+				return
+			}
+			defer conn.Close()
+			if do_once_flag {
+				do_once_flag = false
+				_bot.Logger.Infof("ws服务端 %v 连接成功", _url)
+			} else {
+				_bot.Logger.Debugf("ws服务端 %v 重新连接成功", _url)
+			}
+			wshook(conn)
+			time.Sleep(1 * time.Second)
+		}()
+	}
 }
