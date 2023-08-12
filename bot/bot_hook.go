@@ -254,13 +254,14 @@ func (_bot *Bot) wsClientLoop(_url string) error {
 	do_once_flag := true
 	for {
 		func() {
-			conn, _, err := websocket.DefaultDialer.Dial(_url, nil)
+			conn, resp, err := websocket.DefaultDialer.Dial(_url, nil)
 			if err != nil {
 				_bot.Logger.Errorf("ws服务端 %v 连接失败：%s", _url, err.Error())
 				time.Sleep(1 * time.Second)
 				return
 			}
 			defer conn.Close()
+			resp.Body.Close()
 			if do_once_flag {
 				do_once_flag = false
 				_bot.Logger.Infof("ws服务端 %v 连接成功", _url)

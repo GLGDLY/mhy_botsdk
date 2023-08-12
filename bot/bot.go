@@ -418,7 +418,6 @@ func (_bot *Bot) Start() error {
 	} else {
 		return _bot.startBotAsHttp(_bot_ctx)
 	}
-
 }
 
 func StartAllBot() {

@@ -8,7 +8,7 @@ import (
 
 func (api *ApiBase) PinMessage(villa_id uint64, msg_uid string, is_cancel bool, room_id uint64, send_at int64) (models.EmptyModel, int, error) {
 	data := map[string]interface{}{"msg_uid": msg_uid, "is_cancel": is_cancel, "room_id": room_id, "send_at": send_at}
-	request, build_req_err := http.NewRequest("POST", api.makeURL("/vila/api/bot/platform/pinMessage"), api.parseJSON(data))
+	request, build_req_err := http.NewRequest(http.MethodPost, api.makeURL("/vila/api/bot/platform/pinMessage"), api.parseJSON(data))
 	var resp_data models.EmptyModel
 	http_status, err := api.RequestHandler(villa_id, request, build_req_err, &resp_data)
 	return resp_data, http_status, err
@@ -16,7 +16,7 @@ func (api *ApiBase) PinMessage(villa_id uint64, msg_uid string, is_cancel bool, 
 
 func (api *ApiBase) RecallMessage(villa_id uint64, msg_uid string, room_id uint64, msg_time int64) (models.EmptyModel, int, error) {
 	data := map[string]interface{}{"msg_uid": msg_uid, "room_id": room_id, "msg_time": msg_time}
-	request, build_req_err := http.NewRequest("POST", api.makeURL("/vila/api/bot/platform/recallMessage"), api.parseJSON(data))
+	request, build_req_err := http.NewRequest(http.MethodPost, api.makeURL("/vila/api/bot/platform/recallMessage"), api.parseJSON(data))
 	var resp_data models.EmptyModel
 	http_status, err := api.RequestHandler(villa_id, request, build_req_err, &resp_data)
 	return resp_data, http_status, err
@@ -44,7 +44,7 @@ func (api *ApiBase) SendMessageCustomize(villa_id uint64, room_id uint64, _msg m
 	// 	}
 	// }
 	msg := _msg.Finialize(room_id)
-	request, build_req_err := http.NewRequest("POST", api.makeURL("/vila/api/bot/platform/sendMessage"), api.parseJSON(msg))
+	request, build_req_err := http.NewRequest(http.MethodPost, api.makeURL("/vila/api/bot/platform/sendMessage"), api.parseJSON(msg))
 	var resp_data models.SendMessageModel
 	http_status, err := api.RequestHandler(villa_id, request, build_req_err, &resp_data)
 	return resp_data, http_status, err

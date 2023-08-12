@@ -30,7 +30,6 @@ func (api *ApiBase) MessageParser(msg *models.MsgInputModel, villa_id uint64, _m
 			if word == '\\' {
 				skip_next_word = true
 				continue
-
 			}
 			// check for entity
 			if word == '<' {
@@ -38,7 +37,10 @@ func (api *ApiBase) MessageParser(msg *models.MsgInputModel, villa_id uint64, _m
 					return fmt.Errorf(`invalid format, unexcepted "<" in position %d on msg arg %d`, j, i)
 				}
 				is_entity = true
-				msg.AppendText(msg_buf.String())
+				err := msg.AppendText(msg_buf.String())
+				if err != nil {
+					return err
+				}
 				msg_buf.Reset()
 				entity_type = nil
 			} else if word == '>' {
@@ -49,15 +51,21 @@ func (api *ApiBase) MessageParser(msg *models.MsgInputModel, villa_id uint64, _m
 				switch *entity_type {
 				case models.MsgEntityMentionUserType:
 					if entity_content == "everyone" {
-						msg.AppendText(models.MsgEntityMentionAll{
+						err := msg.AppendText(models.MsgEntityMentionAll{
 							Text: "@全体成员",
 						})
+						if err != nil {
+							return err
+						}
 						break
 					} else if strings.HasPrefix(entity_content, "bot_") {
-						msg.AppendText(models.MsgEntityMentionRobot{
+						err := msg.AppendText(models.MsgEntityMentionRobot{
 							Text:  "@机器人",
 							BotID: entity_content,
 						})
+						if err != nil {
+							return err
+						}
 						break
 					}
 					uid, error := strconv.ParseUint(entity_content, 10, 64)
@@ -76,10 +84,13 @@ func (api *ApiBase) MessageParser(msg *models.MsgInputModel, villa_id uint64, _m
 						username = resp.Data.Member.Basic.Nickname
 						usernames[uid] = username
 					}
-					msg.AppendText(models.MsgEntityMentionUser{
+					err := msg.AppendText(models.MsgEntityMentionUser{
 						Text:   "@" + username,
 						UserID: uid,
 					})
+					if err != nil {
+						return err
+					}
 				case models.MsgEntityVillaRoomLinkType:
 					room_id, error := strconv.ParseUint(entity_content, 10, 64)
 					if error != nil {
@@ -97,16 +108,22 @@ func (api *ApiBase) MessageParser(msg *models.MsgInputModel, villa_id uint64, _m
 						roomname = resp.Data.Room.RoomName
 						roomnames[room_id] = roomname
 					}
-					msg.AppendText(models.MsgEntityVillaRoomLink{
+					err := msg.AppendText(models.MsgEntityVillaRoomLink{
 						Text:    "#" + roomname,
 						VillaID: villa_id,
 						RoomID:  room_id,
 					})
+					if err != nil {
+						return err
+					}
 				case models.MsgEntityLinkType:
-					msg.AppendText(models.MsgEntityLink{
+					err := msg.AppendText(models.MsgEntityLink{
 						URL:                    entity_content,
 						RequiresBotAccessToken: false,
 					})
+					if err != nil {
+						return err
+					}
 				}
 				is_entity = false
 				msg_buf.Reset()
@@ -131,6 +148,9 @@ func (api *ApiBase) MessageParser(msg *models.MsgInputModel, villa_id uint64, _m
 	if is_entity {
 		return fmt.Errorf(`invalid format, unexcepted EOF till last msg arg (start with "<" but not end with ">")`)
 	}
-	msg.AppendText(msg_buf.String())
+	err := msg.AppendText(msg_buf.String())
+	if err != nil {
+		return err
+	}
 	return nil
 }

@@ -28,8 +28,6 @@ func MyCommand1(data bot_events.EventSendMessage) {
 
 func MyCommand2(data bot_events.EventSendMessage) {
 	bot.Logger.Info("MyCommand2")
-	fmt.Print(fmt.Sprintf("MyCommand2 <@%v> <@%v> <@everyone> <#%v>",
-		data.Robot.Template.Id, data.Data.FromUserId, data.Data.RoomId))
 	bot.Logger.Info(data.Reply(fmt.Sprintf("MyCommand2 <@%v> <@%v> <@everyone> <#%v>",
 		data.Robot.Template.Id, data.Data.FromUserId, data.Data.RoomId))) // 使用内嵌格式发送文本消息，内嵌格式按顺序为：@机器人（自己）、@发送者、@全体、#跳转房间
 }
@@ -55,11 +53,13 @@ func msg_handler(data bot_events.EventSendMessage) { // 最后触发监听器，
 		})
 		bot.Logger.Info(data.ReplyCustomize(reply))
 	} else {
-		reply.SetText("你好，我是机器人，你可以输入 hello 来和我",
-			bot_api_models.MsgEntityMentionRobot{ // 艾特机器人
-				Text:  "@" + data.Robot.Template.Name,
-				BotID: data.Robot.Template.Id,
-			}, " 打招呼")
+		// 考虑到有些消息可能希望使用内嵌格式的同时希望添加自定义内容，所以提供了 bot.Api.MessageParser() 方法来解析消息内容并添加到消息体中
+		bot.Api.MessageParser(&reply, data.Data.VillaId, fmt.Sprintf("你好，我是机器人，你可以输入 hello 来和我 <@%v> 打招呼\n\nPowered by ", data.Robot.Template.Id))
+		reply.AppendText(bot_api_models.MsgEntityLink{
+			Text:                   "mhy_botsdk",
+			URL:                    "https://github.com/GLGDLY/mhy_botsdk",
+			RequiresBotAccessToken: false,
+		})
 		bot.Logger.Info(data.ReplyCustomize(reply))
 	}
 }

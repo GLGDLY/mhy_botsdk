@@ -54,8 +54,16 @@ func (p *OnCommand) processCommand(data events.EventSendMessage, _bot *AbstractB
 		if !is_admin {
 			if p.AdminErrorMsg != "" {
 				msg, _ := api_models.NewMsg(api_models.MsgTypeText)
-				msg.SetText(p.AdminErrorMsg)
-				_bot.Api.SendMessageCustomize(data.Robot.VillaId, data.Data.RoomId, msg)
+				err := msg.SetText(p.AdminErrorMsg)
+				if err != nil {
+					_bot.Logger.Error("command listener {", utils.GetFunctionName(p.Listener), "} error: ", err)
+					return false
+				}
+				_, http, err := _bot.Api.SendMessageCustomize(data.Robot.VillaId, data.Data.RoomId, msg)
+				if err != nil || http != 200 {
+					_bot.Logger.Error("command listener {", utils.GetFunctionName(p.Listener), "} error on sending admin error msg: ", err, "(", http, ")")
+					return false
+				}
 				return true
 			}
 			return false
@@ -69,7 +77,6 @@ func (p *OnCommand) processCommand(data events.EventSendMessage, _bot *AbstractB
 
 // 内部检查当前消息是否符合触发条件
 func (p *OnCommand) CheckCommand(data events.EventSendMessage, abstract_bot *AbstractBot) bool {
-
 	msg := data.GetContent(false)
 	if p.Command != nil {
 		for _, v := range p.Command {

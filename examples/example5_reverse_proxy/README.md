@@ -25,5 +25,5 @@ var bot = bot_base.NewWsBot("bot_id", "bot_secret", "bot_pubkey", "your_ws_uri")
 ## 反代的优势
 
 - 可以在官方只支持webhook的情况下，反向代理ws，允许开发者本地链接机器人并调试
-- 允许在大消息量时实现负载均衡看
+- 允许在大消息量时实现负载均衡等功能
 - 使用 Glitch 时，可以无需自行购买服务器或架设内网穿透，可使用 Glitch 反代ws到本地，本地机器直接运行机器人。

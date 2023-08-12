@@ -48,8 +48,16 @@ func (p *OnCommand) processCommand(data events.EventSendMessage, _logger logger.
 		if !is_admin {
 			if p.AdminErrorMsg != "" {
 				msg, _ := api_models.NewMsg(api_models.MsgTypeText)
-				msg.SetText(p.AdminErrorMsg)
-				_api.SendMessageCustomize(data.Robot.VillaId, data.Data.RoomId, msg)
+				err := msg.SetText(p.AdminErrorMsg)
+				if err != nil {
+					_logger.Error("command listener {", utils.GetFunctionName(p.Listener), "} error: ", err)
+					return false
+				}
+				_, http, err := _api.SendMessageCustomize(data.Robot.VillaId, data.Data.RoomId, msg)
+				if err != nil || http != 200 {
+					_logger.Error("command listener {", utils.GetFunctionName(p.Listener), "} error on sending admin error msg: ", err, "(", http, ")")
+					return false
+				}
 				return true
 			}
 			return false

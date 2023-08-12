@@ -43,6 +43,9 @@ func (_bot *Bot) defaultWSProxyLoop(ws *websocket.Conn, msg_chan chan [2][]byte)
 				done_in2out <- 1
 				return
 			}
+			if mtype == websocket.PingMessage {
+				ws.WriteMessage(websocket.PongMessage, nil)
+			}
 		}
 	}()
 
@@ -144,7 +147,7 @@ func (_bot *Bot) AddReverseProxyWS(path, addr string) {
 func (_bot *Bot) defaultHttpProxyLoop(_url *url.URL, msg_chan chan [2][]byte) {
 	for msg := range msg_chan {
 		req := http.Request{
-			Method: "POST",
+			Method: http.MethodPost,
 			URL:    _url,
 			Header: http.Header{
 				"Content-Type":   {"application/json"},
@@ -152,10 +155,11 @@ func (_bot *Bot) defaultHttpProxyLoop(_url *url.URL, msg_chan chan [2][]byte) {
 			},
 			Body: io.NopCloser(bytes.NewReader(msg[0])),
 		}
-		_, err := http.DefaultClient.Do(&req)
+		resp, err := http.DefaultClient.Do(&req)
 		if err != nil {
 			_bot.Logger.Errorf("反向代理 %v 发送失败：%s", _url, err.Error())
 		} else {
+			resp.Body.Close()
 			_bot.Logger.Debugf("反向代理 %v 发送成功", _url)
 		}
 	}

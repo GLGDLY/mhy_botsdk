@@ -78,7 +78,10 @@ func (api *ApiBase) RequestHandler(villa_id uint64, request *http.Request, build
 	err = json.Unmarshal(data, resp_data)
 	if err != nil {
 		var v map[string]interface{}
-		json.Unmarshal(data, &v)
+		err = json.Unmarshal(data, &v)
+		if err != nil {
+			return resp.StatusCode, err
+		}
 		fmt.Println(err, "on data:\n", v)
 	}
 	return resp.StatusCode, err
