@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"strings"
 
-	api_models "github.com/GLGDLY/mhy_botsdk/api_models"
+	commands "github.com/GLGDLY/mhy_botsdk/commands"
 	events "github.com/GLGDLY/mhy_botsdk/events"
 	utils "github.com/GLGDLY/mhy_botsdk/utils"
 )
@@ -14,14 +14,16 @@ type plugin_msg_listener func(data events.EventSendMessage, _bot *AbstractBot)
 
 type Preprocessor plugin_msg_listener
 type OnCommand struct {
-	Command        []string       // 可触发事件的指令列表，与正则 Regex 互斥，优先使用此项
-	Regex          string         // 可触发指令的正则表达式，与指令表 Command 互斥
-	regex          *regexp.Regexp // internal use
-	Listener       plugin_msg_listener
-	RequireAT      bool   // 是否要求必须@机器人才能触发指令
-	RequireAdmin   bool   // 是否要求频道主或或管理才可触发指令
-	AdminErrorMsg  string // 当RequireAT，而触发用户的权限不足时，如此项不为空，返回此消息并短路；否则不进行短路
-	IsShortCircuit bool   // 如果触发指令成功是否短路不运行后续指令（将根据注册顺序排序指令的短路机制，且插件中的短路是否影响主程序会根据bot的is_plugins_short_circuit_affect_main决定）
+	Command            []string                                                   // 可触发事件的指令列表，与正则 Regex 互斥，优先使用此项
+	Regex              string                                                     // 可触发指令的正则表达式，与指令表 Command 互斥
+	regex              *regexp.Regexp                                             // internal use
+	Listener           plugin_msg_listener                                        // 指令触发时的回调函数
+	RequireAT          bool                                                       // 是否要求必须@机器人才能触发指令
+	RequireAdmin       bool                                                       // 是否要求频道主或或管理才可触发指令
+	RequirePermission  func(data events.EventSendMessage, _bot *AbstractBot) bool // 一个自定义的指令权限判断函数，返回true表示允许触发指令
+	AdminErrorMsg      string                                                     // 当RequireAdmin，而触发用户的权限不足时，如此项不为空，返回此消息并短路；否则不进行短路
+	PermissionErrorMsg string                                                     // 当RequirePermission，而触发用户的权限不足时，如此项不为空，返回此消息并短路；否则不进行短路
+	IsShortCircuit     bool                                                       // 如果触发指令成功是否短路不运行后续指令（将根据注册顺序排序指令的短路机制，且插件中的短路是否影响主程序会根据bot的is_plugins_short_circuit_affect_main决定）
 }
 
 type Plugin struct {
@@ -36,38 +38,17 @@ func (p *OnCommand) processCommand(data events.EventSendMessage, _bot *AbstractB
 		return false
 	}
 	if p.RequireAdmin {
-		res, http_code, err := _bot.Api.GetMember(data.Robot.VillaId, data.Data.FromUserId)
-		if err != nil {
-			_bot.Logger.Error("command listener {", utils.GetFunctionName(p.Listener), "} get member role info error: ", err)
-			return false
-		} else if http_code != 200 || res.Retcode != 0 {
-			_bot.Logger.Error("command listener {", utils.GetFunctionName(p.Listener), "} get member role info error: ", res)
-			return false
-		}
-		is_admin := false
-		for _, v := range res.Data.Member.RoleList {
-			if v.RoleType == "MEMBER_ROLE_TYPE_ADMIN" || v.RoleType == "MEMBER_ROLE_TYPE_OWNER" {
-				is_admin = true
-				break
+		return commands.CommandCheckIsAdmin(utils.GetFunctionName(p.Listener), p.AdminErrorMsg, data, _bot.Logger, _bot.Api)
+	}
+	if p.RequirePermission != nil && !p.RequirePermission(data, _bot) {
+		if p.PermissionErrorMsg != "" {
+			_, http, err := _bot.Api.SendMessage(data.Robot.VillaId, data.Data.RoomId, p.PermissionErrorMsg)
+			if err != nil || http != 200 {
+				_bot.Logger.Error("command listener {", utils.GetFunctionName(p.Listener), "} error on sending permission error msg: ", err, "(", http, ")")
 			}
+			return true
 		}
-		if !is_admin {
-			if p.AdminErrorMsg != "" {
-				msg, _ := api_models.NewMsg(api_models.MsgTypeText)
-				err := msg.SetText(p.AdminErrorMsg)
-				if err != nil {
-					_bot.Logger.Error("command listener {", utils.GetFunctionName(p.Listener), "} error: ", err)
-					return false
-				}
-				_, http, err := _bot.Api.SendMessageCustomize(data.Robot.VillaId, data.Data.RoomId, msg)
-				if err != nil || http != 200 {
-					_bot.Logger.Error("command listener {", utils.GetFunctionName(p.Listener), "} error on sending admin error msg: ", err, "(", http, ")")
-					return false
-				}
-				return true
-			}
-			return false
-		}
+		return false
 	}
 	utils.Try(func() { p.Listener(data, _bot) }, func(err interface{}, tb string) {
 		_bot.Logger.Error("command listener {", utils.GetFunctionName(p.Listener), "} error: ", err, "\n", tb)

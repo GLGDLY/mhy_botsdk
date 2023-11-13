@@ -68,7 +68,7 @@ func NewMsg(msg_type MsgContentType) (MsgInputModel, error) {
 		msg["msg_content"].(MsgInputModel)["content"] = MsgInputModel{"text": bytes.NewBufferString(""), "entities": []MsgInputModel{}}
 		msg["msg_content"].(MsgInputModel)["mentionedInfo"] = MsgInputModel{"type": MentionUser, "userIdList": []string{}}
 	case MsgTypeImage:
-		msg["msg_content"].(MsgInputModel)["content"] = MsgInputModel{"url": "", "size": MsgInputModel{"width": 0, "height": 0}, "file_size": 0}
+		msg["msg_content"].(MsgInputModel)["content"] = MsgInputModel{"url": ""}
 	case MsgTypePost:
 		msg["msg_content"] = MsgInputModel{"content": MsgInputModel{"post_id": ""}}
 	default:
@@ -179,13 +179,11 @@ func (msg MsgInputModel) SetTextQuote(quoted_message_id string, quoted_message_s
 }
 
 // 设置图片消息内容，接受图片url, 图片宽度, 图片高度, 图片大小 4种类型的参数，宽高单位为像素，图片大小单位为字节，不应超过10M
-func (msg MsgInputModel) SetImage(url string, width int, height int, file_size int) error {
+func (msg MsgInputModel) SetImage(url string, args ...interface{}) error {
 	// if MsgContentType(msg["object_name"].(MsgContentType)) != MsgTypeImage {
 	// 	return errors.New("消息类型不是图片消息，请使用NewMsg(MsgTypeImage)创建图片消息后SetImage")
 	// }
 	msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["url"] = url
-	msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["size"] = MsgInputModel{"width": width, "height": height}
-	msg["msg_content"].(MsgInputModel)["content"].(MsgInputModel)["file_size"] = file_size
 	return nil
 }
 

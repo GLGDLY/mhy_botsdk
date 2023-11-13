@@ -70,7 +70,10 @@ func (api *ApiBase) RequestHandler(villa_id uint64, request *http.Request, build
 	if resp.Header.Get("Content-Type") != "application/json" {
 		return resp.StatusCode, errors.New("response Content-Type is not application/json")
 	}
-	data, _ := io.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return resp.StatusCode, err
+	}
 
 	s := reflect.ValueOf(resp_data)
 	reflect.Indirect(s).FieldByName("APIBaseModel").FieldByName("RawData").SetString(string(data))
@@ -78,11 +81,11 @@ func (api *ApiBase) RequestHandler(villa_id uint64, request *http.Request, build
 	err = json.Unmarshal(data, resp_data)
 	if err != nil {
 		var v map[string]interface{}
-		err = json.Unmarshal(data, &v)
-		if err != nil {
-			return resp.StatusCode, err
+		_err := json.Unmarshal(data, &v)
+		if _err != nil {
+			return resp.StatusCode, _err
 		}
-		fmt.Println(err, "on data:\n", v)
+		fmt.Println(err, "on decoding data:\n", v)
 	}
 	return resp.StatusCode, err
 }

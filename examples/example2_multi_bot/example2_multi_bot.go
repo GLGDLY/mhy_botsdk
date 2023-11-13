@@ -72,7 +72,7 @@ func msg_handler(data bot_events.EventSendMessage) {
 func MyCommand1(data bot_events.EventSendMessage) {
 	logger_dispatcher(data).Info("MyCommand1")
 	reply, _ := bot_api_models.NewMsg(bot_api_models.MsgTypeImage)
-	reply.SetImage("https://webstatic.mihoyo.com/vila/bot/doc/message_api/img/text_case.jpg", 1080, 310, 46000)
+	reply.SetImage("https://webstatic.mihoyo.com/vila/bot/doc/message_api/img/text_case.jpg")
 	logger_dispatcher(data).Info(data.ReplyCustomize(reply))
 }
 

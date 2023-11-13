@@ -231,3 +231,41 @@ type UploadImageModel struct {
 		NewURL string `json:"new_url"`
 	} `json:"data"`
 }
+
+type GetUploadFileImageParamsModel struct {
+	APIBaseModel
+	Data struct {
+		Type     string `json:"type"`
+		FileName string `json:"file_name"`
+		MaxSize  uint32 `json:"max_file_size"`
+		Params   struct {
+			AccessID    string `json:"accessid"`
+			Callback    string `json:"callback"`
+			CallbackVar struct {
+				XExtra string `json:"x:extra"`
+			} `json:"callback_var"`
+			Dir                 string `json:"dir"`
+			Expire              uint   `json:"expire"`
+			Host                string `json:"host"`
+			Name                string `json:"name"`
+			Policy              string `json:"policy"`
+			Signature           string `json:"signature"`
+			XOSSContentType     string `json:"x_oss_content_type"`
+			ObjectACL           string `json:"object_acl"`
+			ContentDisposition  string `json:"content_disposition"`
+			Key                 string `json:"key"`
+			SuccessActionStatus string `json:"success_action_status"`
+		} `json:"params"`
+	} `json:"data"`
+}
+
+// {"retcode":0,"msg":"success","data":{"url":"https://upload-bbs.miyoushe.com/backend/vila/bot/platform/img/2023/11/13/bot_Wak0ggfwKgUxSpvO6XE2/XSUqpED0B0r1sT41sgY1NQ==_3408249428152812401.jpg","secret_url":"","object":"backend/vila/bot/platform/img/2023/11/13/bot_Wak0ggfwKgUxSpvO6XE2/XSUqpED0B0r1sT41sgY1NQ==_3408249428152812401.jpg"}}
+
+type UploadFileImageModel struct {
+	APIBaseModel
+	Data struct {
+		NewURL    string `json:"url"`
+		SecretURL string `json:"secret_url"`
+		Object    string `json:"object"`
+	} `json:"data"`
+}

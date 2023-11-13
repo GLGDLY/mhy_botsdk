@@ -243,10 +243,8 @@ func Event2EventSendMessage(event Event, api *apis.ApiBase) EventSendMessage {
 	var eventSendMessage EventSendMessage
 	eventSendMessage.EventBase = event.Event.EventBase
 	eventSendMessage.Data = event.Event.ExtendData.EventData.SendMessage
-	err := json.Unmarshal([]byte(eventSendMessage.Data.ContentRaw), &eventSendMessage.Data.Content)
-	if err == nil {
-		eventSendMessage.api = api
-	}
+	json.Unmarshal([]byte(eventSendMessage.Data.ContentRaw), &eventSendMessage.Data.Content)
+	eventSendMessage.api = api
 	return eventSendMessage
 }
 

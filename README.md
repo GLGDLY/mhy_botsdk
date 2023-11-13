@@ -74,8 +74,21 @@ func msg_preprocessor(data bot_events.EventSendMessage) { // 借助preprocessor�
 func MyCommand1(data bot_events.EventSendMessage) {
     bot.Logger.Info("MyCommand1")
     reply, _ := bot_api_models.NewMsg(bot_api_models.MsgTypeImage)  // 创建图片类型的消息体
-    reply.SetImage("https://webstatic.mihoyo.com/vila/bot/doc/message_api/img/text_case.jpg", 1080, 310, 46000) // 设置图片消息内容
-    bot.Logger.Info(data.ReplyCustomize(reply))
+
+    // 设置图片消息内容
+	reply.SetImage("https://webstatic.mihoyo.com/vila/bot/doc/message_api/img/text_case.jpg")
+	bot.Logger.Info(data.ReplyCustomize(reply))
+
+	// 设置本地图片消息内容
+	resp, http_code, err := bot.Api.UploadFileImage(data.Robot.VillaId, "head.jpg")
+	if err != nil {
+		bot.Logger.Error(err)
+		reply := fmt.Sprintf("上传图片失败，错误信息(%d)：%v", http_code, err)
+		bot.Logger.Info(data.Reply(reply))
+		return
+	}
+	reply.SetImage(resp.Data.NewURL)
+	bot.Logger.Info(data.ReplyCustomize(reply))
 }
 
 func MyCommand2(data bot_events.EventSendMessage) {
