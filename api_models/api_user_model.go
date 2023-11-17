@@ -26,11 +26,19 @@ const (
 	MsgEntityMentionAllType    MsgEntityType = "mention_all"
 	MsgEntityVillaRoomLinkType MsgEntityType = "villa_room_link"
 	MsgEntityLinkType          MsgEntityType = "link"
+	MsgEntityStyleType         MsgEntityType = "style"
 )
 
 const (
 	MentionAll  MsgMentionType = 1
 	MentionUser MsgMentionType = 2
+)
+
+const (
+	StyleBold          string = "bold"
+	StyleItalic        string = "italic"
+	StyleStrikethrough string = "strikethrough"
+	StyleUnderline     string = "underline"
 )
 
 type MsgEntityMentionRobot struct {
@@ -57,6 +65,11 @@ type MsgEntityLink struct {
 	Text                   string
 	URL                    string
 	RequiresBotAccessToken bool
+}
+
+type MsgEntityStyle struct {
+	Text      string
+	FontStyle string
 }
 
 type MsgInputModel map[string]interface{}
@@ -131,6 +144,13 @@ func (msg MsgInputModel) appendText(text_len int, args ...interface{}) { // inte
 					"requires_bot_access_token": typed_arg.RequiresBotAccessToken},
 					"offset": text_len, "length": this_len})
 			msg_context_text.WriteString(text)
+			text_len += this_len
+		case MsgEntityStyle:
+			this_len := len(utf16.Encode([]rune(typed_arg.Text)))
+			msg_content_inner["entities"] = append(msg_content_inner["entities"].([]MsgInputModel),
+				MsgInputModel{"entity": MsgInputModel{"type": MsgEntityStyleType, "font_style": typed_arg.FontStyle},
+					"offset": text_len, "length": this_len})
+			msg_context_text.WriteString(typed_arg.Text)
 			text_len += this_len
 		default:
 			content_string := utils.String(arg)
